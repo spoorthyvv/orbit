@@ -32,7 +32,7 @@ vcpkg install freeglut glew freetype-gl curl breakpad capstone asio cereal imgui
 
 :: Build static dependencies
 set VCPKG_DEFAULT_TRIPLET=x64-windows-static
-vcpkg install capstone freeglut imgui
+vcpkg install capstone freeglut imgui openssl
 
 cd ../..
 

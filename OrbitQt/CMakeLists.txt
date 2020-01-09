@@ -249,6 +249,7 @@ set(ORBIT_DEPENDENCIES
     ${EXTERN_ROOT}/vcpkg/installed/x64-windows/lib/zlib.lib;
     ${EXTERN_ROOT}/vcpkg/installed/x64-windows/lib/freetype.lib;
     ${EXTERN_ROOT}/vcpkg/installed/x64-windows-static/debug/lib/capstone.lib #TODO: figure out why release lib is not working.
+    ${OPENSSL_LIBRARIES}
 )
 
 endif()
@@ -268,6 +269,7 @@ set(ORBIT_DEPENDENCIES
     ${PNG_LIBRARIES}
 #    ${FREETYPE_LIBRARY}
     ${FREETYPE_SYSTEM_LIB}
+    ${OPENSSL_LIBRARIES}
     Qt5::Widgets
     Qt5::Core
 )

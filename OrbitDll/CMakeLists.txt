@@ -33,6 +33,7 @@ target_link_libraries(
     OrbitCore
 	OrbitAsm
 	${BREAKPAD_LIBRARIES}
+	${OPENSSL_LIBRARIES}
 	dbghelp.lib
 )
 

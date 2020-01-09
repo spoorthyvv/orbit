@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.6)
 
 # To enable PrintVars output, set PRINT_VAR_OUTPUT to ON
-set(PRINT_VAR_OUTPUT OFF)
+set(PRINT_VAR_OUTPUT ON)
 
 # Print all variables containing "var"
 function(PrintVars var)

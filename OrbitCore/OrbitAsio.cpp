@@ -6,6 +6,9 @@
 #include "Tcp.h"
 #include "VariableTracing.h"
 
+#include <asio/impl/src.hpp>
+#include <asio/ssl/impl/src.hpp>
+
 //-----------------------------------------------------------------------------
 TcpService::TcpService()
 {

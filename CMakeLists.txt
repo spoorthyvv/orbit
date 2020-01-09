@@ -95,6 +95,7 @@ PrintVars(ASIO)
 
 #add_definitions(-DASIO_HAS_STD_CHRONO)
 add_definitions(-DASIO_DISABLE_BOOST_DATE_TIME)
+add_definitions(-DASIO_SEPARATE_COMPILATION)
 include_directories(${ASIO_INCLUDE_DIR})
 
 #pkg_check_modules(CURL libcurl REQUIRED)
@@ -108,6 +109,14 @@ endif()
 #pkg_check_modules(CEREAL cereal REQUIRED)
 find_package(cereal REQUIRED)
 PrintVars(CEREAL)
+
+#OpenSSL
+set(OPENSSL_USE_STATIC_LIBS TRUE)
+if(WIN32)
+set(OPENSSL_ROOT_DIR "external/vcpkg/packages/openssl-windows_x64-windows-static")
+endif()
+include(FindOpenSSL)
+PrintVars(OPENSSL)
 
 #find_package(capstone REQUIRED)
 find_path(CAPSTONE_INCLUDE_DIR capstone.h PATH_SUFFIXES capstone)
