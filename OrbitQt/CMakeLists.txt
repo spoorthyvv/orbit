@@ -270,6 +270,7 @@ set(ORBIT_DEPENDENCIES
 #    ${FREETYPE_LIBRARY}
     ${FREETYPE_SYSTEM_LIB}
     ${OPENSSL_LIBRARIES}
+    ${CMAKE_DL_LIBS}
     Qt5::Widgets
     Qt5::Core
 )
