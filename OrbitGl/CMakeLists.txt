@@ -188,6 +188,7 @@ PRIVATE
     ${GLEW_INCLUDE_DIR}
     ${CMAKE_CURRENT_SOURCE_DIR}
     ${CEREAL_INCLUDE_DIR}
+    ${OPENSSL_INCLUDE_DIR}
     ${EXTERN_ROOT}/concurrentqueue
     ${EXTERN_ROOT}/multicore/common/
     ${EXTERN_ROOT}/xxHash-r42
