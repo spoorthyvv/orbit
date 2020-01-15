@@ -51,7 +51,7 @@ void TcpServer::Start( unsigned short a_Port )
 
     PRINT_FUNC;
     m_TcpService = new TcpService();
-    m_TcpServer = new tcp_server( *m_TcpService->m_IoService, a_Port );
+    m_TcpServer = new tcp_server( *m_TcpService->m_IoService, m_TcpService->m_SSLContext, a_Port );
 
     PRINT_VAR(a_Port);
 
@@ -234,7 +234,7 @@ void TcpServer::MainThreadTick()
     if( !Capture::IsRemote() && Capture::GInjected && Capture::IsCapturing() )
     {
         TcpSocket* socket = GetSocket();
-        if( socket == nullptr || !socket->m_Socket || !socket->m_Socket->is_open() )
+        if( socket == nullptr || !socket->m_Socket || !socket->m_Socket->lowest_layer().is_open() )
         {
             Capture::StopCapture();
         }
@@ -247,7 +247,7 @@ bool TcpServer::IsLocalConnection()
     TcpSocket* socket = GetSocket();
     if( socket != nullptr && socket->m_Socket )
     {
-        std::string endPoint = socket->m_Socket->remote_endpoint().address().to_string();
+        std::string endPoint = socket->m_Socket->lowest_layer().remote_endpoint().address().to_string();
         if( endPoint == "127.0.0.1" || ToLower( endPoint ) == "localhost" )
         {
             return true;

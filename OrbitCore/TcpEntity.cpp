@@ -46,9 +46,9 @@ void TcpEntity::Stop()
     
     if( m_TcpSocket && m_TcpSocket->m_Socket )
     {
-        if( m_TcpSocket->m_Socket->is_open() )
+        if( m_TcpSocket->m_Socket->lowest_layer().is_open() )
         {
-            m_TcpSocket->m_Socket->close();
+            m_TcpSocket->m_Socket->lowest_layer().close();
         }
     }
     if( m_TcpService && m_TcpService->m_IoService )
@@ -109,7 +109,7 @@ void TcpEntity::SendData()
         {
             --m_NumQueuedEntries;
             TcpSocket* socket = GetSocket();
-            if( socket && socket->m_Socket && socket->m_Socket->is_open() )
+            if( socket && socket->m_Socket && socket->m_Socket->lowest_layer().is_open() )
             {
                 asio::write( *socket->m_Socket, shared_const_buffer( buffer ) );
             }

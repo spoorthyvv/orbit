@@ -4,6 +4,7 @@
 #pragma once
 
 #include "asio.hpp"
+#include "asio/ssl.hpp"
 
 using namespace asio::ip;
 
@@ -14,14 +15,18 @@ public:
     TcpService();
     ~TcpService();
     asio::io_context* m_IoService;
+    asio::ssl::context* m_SSLContext;
 };
+
+//-----------------------------------------------------------------------------
+using TcpSocketType = asio::ssl::stream<tcp::socket>;
 
 //-----------------------------------------------------------------------------
 class TcpSocket
 {
 public:
     TcpSocket() : m_Socket( nullptr ){}
-    TcpSocket( tcp::socket* a_Socket ) : m_Socket( a_Socket ){};
+    TcpSocket( TcpSocketType* a_Socket ) : m_Socket( a_Socket ){};
     ~TcpSocket();
-    tcp::socket* m_Socket;
+    TcpSocketType* m_Socket;
 };

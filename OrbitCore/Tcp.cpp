@@ -24,9 +24,17 @@ tcp_server::~tcp_server()
 }
 
 //-----------------------------------------------------------------------------
-tcp_server::tcp_server( asio::io_service & io_service, unsigned short port )
+tcp_server::tcp_server( asio::io_service & io_service, asio::ssl::context * ssl_context, unsigned short port )
     : m_Acceptor( io_service, tcp::endpoint( tcp::v4(), port ) )
+	, m_SSLContext(ssl_context)
 {
+    // :TODO_SSL: Setup SSL Server Context
+    //m_SSLContext->set_options( ... );
+    //m_SSLContext->set_password_callback( ... );
+    //m_SSLContext->use_certificate_chain_file("server.pem");
+    //m_SSLContext->use_private_key_file("server.pem", boost::asio::ssl::context::pem);
+    //m_SSLContext->use_tmp_dh_file("dh2048.pem");
+
     start_accept();
 }
 
@@ -55,11 +63,11 @@ void tcp_server::start_accept()
     PRINT_FUNC;
 
     // creates a socket
-    TcpConnection::pointer new_connection = TcpConnection::create( m_Acceptor.get_io_service() );
+    TcpConnection::pointer new_connection = TcpConnection::create( m_Acceptor.get_io_service(), *m_SSLContext );
 
     // initiates an asynchronous accept operation 
     // to wait for a new connection. 
-    m_Acceptor.async_accept( *new_connection->GetSocket().m_Socket
+    m_Acceptor.async_accept( new_connection->GetSocket().m_Socket->lowest_layer()
                            , std::bind( &tcp_server::handle_accept
                                       , this
                                       , new_connection
@@ -105,7 +113,7 @@ void TcpConnection::ReadMessage()
         else
         {
             PRINT_VAR( ec.message() );
-            m_Socket.close();
+            m_Socket.lowest_layer().close();
         }
     }
     
@@ -151,7 +159,7 @@ void TcpConnection::ReadWebsocketMask()
         else
         {
             PRINT_VAR( ec.message() );
-            m_Socket.close();
+            m_Socket.lowest_layer().close();
         }
     }
 
@@ -174,7 +182,7 @@ void TcpConnection::ReadWebsocketPayload()
         else
         {
             PRINT_VAR( ec.message() );
-            m_Socket.close();
+            m_Socket.lowest_layer().close();
         }
     }
 
@@ -323,7 +331,7 @@ void TcpConnection::ReadPayload()
             else
             {
                 PRINT_VAR( ec.message() );
-                m_Socket.close();
+                m_Socket.lowest_layer().close();
             }
         }
         );

@@ -46,9 +46,9 @@ void TcpClient::Connect(const std::string& a_Host)
     std::string & port = vec[1];
 
     m_TcpService->m_IoService = new asio::io_service();
-    m_TcpSocket->m_Socket = new tcp::socket(*m_TcpService->m_IoService);
+    m_TcpSocket->m_Socket = new TcpSocketType(*m_TcpService->m_IoService, *m_TcpService->m_SSLContext);
 
-    asio::ip::tcp::socket & socket = *m_TcpSocket->m_Socket;
+	TcpSocketType & socket = *m_TcpSocket->m_Socket;
     asio::ip::tcp::resolver resolver(*m_TcpService->m_IoService);
     asio::ip::tcp::resolver::query query(host, port, tcp::resolver::query::canonical_name);
     asio::ip::tcp::resolver::iterator endpoint_iterator = resolver.resolve(query);
@@ -58,8 +58,8 @@ void TcpClient::Connect(const std::string& a_Host)
     asio::error_code error = asio::error::host_not_found;
     while (error && endpoint_iterator != end)
     {
-        socket.close();
-        auto err = socket.connect(*endpoint_iterator++, error);
+        socket.lowest_layer().close();
+        auto err = socket.lowest_layer().connect(*endpoint_iterator++, error);
         PRINT_VAR(err.message().c_str());
     }
 
@@ -69,6 +69,11 @@ void TcpClient::Connect(const std::string& a_Host)
         m_IsValid = false;
         return;
     }
+
+    // :TODO_SSL: Setup SSL verify
+    //socket.set_verify_mode(asio::ssl::verify_peer);
+    //socket.set_verify_callback( ... );
+    socket.handshake(TcpSocketType::client);
 
     m_IsValid = true;
 }
@@ -400,7 +405,7 @@ void TcpClient::DecodeMessage( Message & a_Message )
         Argument* argPtr = (Argument*)a_Message.GetData();
         FunctionArgInfo argInfo;
         argInfo.m_NumStackBytes = 1; // used so that epilog knows we need to send argInfo
-        for( int i = 0; i < header.m_NumArgs; ++i )
+        for( uint32_t i = 0; i < header.m_NumArgs; ++i )
         {
             // TODO: x86: Check if arg is actually on stack or in register
             argInfo.m_ArgDataSize += argPtr[i].m_NumBytes;

@@ -29,9 +29,9 @@ public:
 
     ~TcpConnection();
 
-    static pointer create( asio::io_service& io_service )
+    static pointer create( asio::io_service& io_service, asio::ssl::context& ssl_context)
     {
-        return pointer( new TcpConnection( io_service ) );
+        return pointer( new TcpConnection( io_service, ssl_context ) );
     }
 
     TcpSocket& GetSocket()
@@ -61,8 +61,8 @@ public:
     std::vector<std::string> GetStats();
 
 private:
-    TcpConnection( asio::io_service& io_service )
-        : m_Socket( io_service )
+    TcpConnection( asio::io_service& io_service, asio::ssl::context& ssl_context)
+        : m_Socket( io_service, ssl_context)
         , m_WrappedSocket( &m_Socket )
     {
         m_NumBytesReceived = 0;
@@ -77,7 +77,7 @@ private:
     void handle_request_line( asio::error_code ec, std::size_t bytes_transferred );
     void SendWebsocketResponse();
 
-    tcp::socket         m_Socket;
+    TcpSocketType       m_Socket;
     TcpSocket           m_WrappedSocket;
     Message             m_Message;
     std::vector<char>   m_Payload;
@@ -93,7 +93,7 @@ private:
 class tcp_server : public std::enable_shared_from_this < tcp_server >
 {
 public:
-    tcp_server( asio::io_service & io_service, unsigned short port );
+    tcp_server( asio::io_service & io_service, asio::ssl::context * ssl_context, unsigned short port );
     ~tcp_server();
 
     void Disconnect();
@@ -108,6 +108,7 @@ private:
     void handle_accept( TcpConnection::pointer new_connection, const asio::error_code& error );
 
     tcp::acceptor m_Acceptor;
+    asio::ssl::context* m_SSLContext;
     std::shared_ptr<TcpConnection> m_Connection;
     std::unordered_set< std::shared_ptr<TcpConnection> > m_ConnectionsSet;
 };

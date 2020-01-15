@@ -13,6 +13,11 @@
 TcpService::TcpService()
 {
     m_IoService = new asio::io_service();
+
+    m_SSLContext = new asio::ssl::context(asio::ssl::context::sslv23);
+
+    // :TODO_SSL: Setup default SSL Context states
+    m_SSLContext->set_default_verify_paths();
 }
 
 //-----------------------------------------------------------------------------
