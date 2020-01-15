@@ -7,6 +7,7 @@
 #include <string>
 
 #define SCOPE_TIMER_LOG( msg ) LocalScopeTimer UNIQUE_ID(msg)
+#define SCOPE_TIMER_FUNC SCOPE_TIMER_LOG( __FUNCTION__ )
 extern thread_local int CurrentDepth;
 
 //-----------------------------------------------------------------------------
@@ -104,6 +105,7 @@ class LocalScopeTimer
 public:
     LocalScopeTimer();
     LocalScopeTimer( const std::wstring & a_Message );
+	LocalScopeTimer( const char* a_Message );
     LocalScopeTimer( double* a_Millis );
     ~LocalScopeTimer();
 protected:
