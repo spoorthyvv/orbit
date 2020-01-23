@@ -37,6 +37,25 @@ TcpClient::~TcpClient()
 }
 
 //-----------------------------------------------------------------------------
+static bool verify_certificate(bool preverified, asio::ssl::verify_context& ctx)
+{
+    // The verify callback can be used to check whether the certificate that is
+    // being presented is valid for the peer. For example, RFC 2818 describes
+    // the steps involved in doing this for HTTPS. Consult the OpenSSL
+    // documentation for more details. Note that the callback is called once
+    // for each certificate in the certificate chain, starting from the root
+    // certificate authority.
+
+    // In this example we will simply print the certificate's subject name.
+    char subject_name[256];
+    X509* cert = X509_STORE_CTX_get_current_cert(ctx.native_handle());
+    X509_NAME_oneline(X509_get_subject_name(cert), subject_name, 256);
+    std::cout << "Verifying " << subject_name << "\n";
+
+    return preverified;
+}
+
+//-----------------------------------------------------------------------------
 void TcpClient::Connect(const std::string& a_Host)
 {
     PRINT_FUNC;
@@ -45,8 +64,17 @@ void TcpClient::Connect(const std::string& a_Host)
     std::string & host = vec[0];
     std::string & port = vec[1];
 
+    // SSL
+    asio::ssl::context ctx(asio::ssl::context::sslv23);
+    std::string certificate = ws2s(Path::GetExternalPath()) + "ssl/test_ca.pem";
+    PRINT_VAR(certificate);
+    ctx.load_verify_file(certificate);
+
     m_TcpService->m_IoService = new asio::io_service();
-    m_TcpSocket->m_Socket = new TcpSocketType(*m_TcpService->m_IoService, *m_TcpService->m_SSLContext);
+    m_TcpSocket->m_Socket = new TcpSocketType(*m_TcpService->m_IoService, ctx);
+
+    m_TcpSocket->m_Socket->set_verify_mode(asio::ssl::verify_peer);
+    m_TcpSocket->m_Socket->set_verify_callback(&verify_certificate);
 
 	TcpSocketType & socket = *m_TcpSocket->m_Socket;
     asio::ip::tcp::resolver resolver(*m_TcpService->m_IoService);
@@ -70,10 +98,18 @@ void TcpClient::Connect(const std::string& a_Host)
         return;
     }
 
-    // :TODO_SSL: Setup SSL verify
-    //socket.set_verify_mode(asio::ssl::verify_peer);
-    //socket.set_verify_callback( ... );
-    socket.handshake(TcpSocketType::client);
+    socket.async_handshake(asio::ssl::stream_base::client,
+        [this](const std::error_code& error)
+        {
+          if (!error)
+          {
+
+          }
+          else
+          {
+            std::cout << "Handshake failed: " << error.message() << "\n";
+          }
+        });
 
     m_IsValid = true;
 }

@@ -41,7 +41,15 @@ public:
 
     void start()
     {
-        ReadMessage();
+        auto self(shared_from_this());
+        m_Socket.async_handshake(asio::ssl::stream_base::server,
+        [this, self](const std::error_code& error)
+        {
+          if (!error)
+          {
+            ReadMessage();
+          }
+        });
     }
 
     void ReadMessage();
@@ -106,6 +114,7 @@ public:
 private:
     void start_accept();
     void handle_accept( TcpConnection::pointer new_connection, const asio::error_code& error );
+    std::string get_password();
 
     tcp::acceptor m_Acceptor;
     asio::ssl::context* m_SSLContext;

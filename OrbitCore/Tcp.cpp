@@ -24,6 +24,13 @@ tcp_server::~tcp_server()
 }
 
 //-----------------------------------------------------------------------------
+std::string tcp_server::get_password()
+{
+    PRINT_FUNC;
+    return "test";
+}
+
+//-----------------------------------------------------------------------------
 tcp_server::tcp_server( asio::io_service & io_service, asio::ssl::context * ssl_context, unsigned short port )
     : m_Acceptor( io_service, tcp::endpoint( tcp::v4(), port ) )
 	, m_SSLContext(ssl_context)
@@ -34,6 +41,20 @@ tcp_server::tcp_server( asio::io_service & io_service, asio::ssl::context * ssl_
     //m_SSLContext->use_certificate_chain_file("server.pem");
     //m_SSLContext->use_private_key_file("server.pem", boost::asio::ssl::context::pem);
     //m_SSLContext->use_tmp_dh_file("dh2048.pem");
+
+    std::string server_pem = ws2s(Path::GetExternalPath()) + "ssl/test_server.pem";
+    std::string dh = ws2s(Path::GetExternalPath()) + "ssl/test_dh2048.pem";
+    PRINT_VAR(server_pem);
+    PRINT_VAR(dh);
+
+    m_SSLContext->set_options(
+        asio::ssl::context::default_workarounds
+        | asio::ssl::context::no_sslv2
+        | asio::ssl::context::single_dh_use);
+    m_SSLContext->set_password_callback(std::bind(&tcp_server::get_password, this));
+    m_SSLContext->use_certificate_chain_file(server_pem);
+    m_SSLContext->use_private_key_file(server_pem, asio::ssl::context::pem);
+    m_SSLContext->use_tmp_dh_file(dh);
 
     start_accept();
 }
