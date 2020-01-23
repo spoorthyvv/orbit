@@ -430,6 +430,17 @@ std::vector< std::wstring > Path::ListFiles( const std::wstring & a_Dir, std::fu
         } while (FindNextFile(hFind, &data) != 0);
         FindClose(hFind);
     }
+#else
+    DIR *dir;
+    struct dirent *ent;
+    std::string directory = ws2s(a_Dir);
+    if ((dir = opendir(directory.c_str())) != NULL) {
+      /* print all the files and directories within directory */
+      while ((ent = readdir(dir)) != NULL) {
+        files.push_back(s2ws(ent->d_name));
+      }
+      closedir(dir);
+    }
 #endif
 
     return files;
