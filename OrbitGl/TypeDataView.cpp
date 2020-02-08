@@ -20,8 +20,7 @@ TypesDataView::TypesDataView() {
   m_SortingToggles.resize(Type::NUM_EXPOSED_MEMBERS, false);
   m_SortingToggles[Type::SELECTED] = true;
   OnDataChanged();
-
-  GOrbitApp->RegisterTypesDataView(this);
+  m_Type = DataViewType::TYPES;
 }
 
 //-----------------------------------------------------------------------------

@@ -15,12 +15,11 @@
 
 //-----------------------------------------------------------------------------
 ProcessesDataView::ProcessesDataView() {
+  m_Type = DataViewType::PROCESSES;
   m_SortingToggles.resize(PDV_NumColumns, false);
   UpdateProcessList();
   m_UpdatePeriodMs = 1000;
   m_IsRemote = false;
-
-  GOrbitApp->RegisterProcessesDataView(this);
 }
 
 //-----------------------------------------------------------------------------

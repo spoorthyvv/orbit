@@ -4,6 +4,7 @@
 
 #include "GlPanel.h"
 
+#include "App.h"
 #include "BlackBoard.h"
 #include "CaptureWindow.h"
 #include "GlCanvas.h"
@@ -13,35 +14,41 @@
 #include "RuleEditor.h"
 
 //-----------------------------------------------------------------------------
-GlPanel* GlPanel::Create(Type a_Type, void* a_UserData) {
+std::shared_ptr<GlPanel> GlPanel::Create(Type a_Type, void* a_UserData) {
   GlPanel* panel = nullptr;
 
   switch (a_Type) {
-    case CAPTURE:
-      panel = new CaptureWindow();
-      break;
-    case IMMEDIATE:
-      panel = new ImmediateWindow();
-      break;
-    case VISUALIZE:
-      panel = new BlackBoard();
-      break;
-    case RULE_EDITOR:
-      panel = new RuleEditor();
-      break;
-    case DEBUG:
-      panel = new HomeWindow();
-      break;
-    case PLUGIN:
-      panel = new PluginCanvas((Orbit::Plugin*)a_UserData);
-
+    case CAPTURE: {
+      auto panel = std::make_shared<CaptureWindow>();
+      GOrbitApp->RegisterCaptureWindow(panel);
+      return std::static_pointer_cast<GlPanel>(panel);
+    }
+    case IMMEDIATE: {
+      auto panel = std::make_shared<ImmediateWindow>();
+      return std::static_pointer_cast<GlPanel>(panel);
+    }
+    case VISUALIZE: {
+      auto panel = std::make_shared<BlackBoard>();
+      return std::static_pointer_cast<GlPanel>(panel);
+    }
+    case RULE_EDITOR: {
+      auto panel = std::make_shared<RuleEditor>();
+      GOrbitApp->RegisterRuleEditor(panel);
+      return std::static_pointer_cast<GlPanel>(panel);
+    }
+    case DEBUG: {
+      auto panel = std::make_shared<HomeWindow>();
+      return std::static_pointer_cast<GlPanel>(panel);
+    }
+    case PLUGIN: {
+      auto panel = std::make_shared<PluginCanvas>((Orbit::Plugin*)a_UserData);
+      return std::static_pointer_cast<GlPanel>(panel);
+    }
+    default:
       break;
   }
 
-  panel->m_Type = a_Type;
-
-  // Todo: fix leak...
-  return panel;
+  return nullptr;
 }
 
 //-----------------------------------------------------------------------------

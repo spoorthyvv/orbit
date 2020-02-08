@@ -13,7 +13,7 @@
 #include "TcpServer.h"
 
 //-----------------------------------------------------------------------------
-BlackBoard::BlackBoard() : GlCanvas() {}
+BlackBoard::BlackBoard() : GlCanvas() { m_Type = GlPanel::VISUALIZE; }
 
 //-----------------------------------------------------------------------------
 BlackBoard::~BlackBoard() {}

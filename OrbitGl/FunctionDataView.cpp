@@ -16,9 +16,9 @@
 
 //-----------------------------------------------------------------------------
 FunctionsDataView::FunctionsDataView() {
-  GOrbitApp->RegisterFunctionsDataView(this);
   m_SortingToggles.resize(Function::NUM_EXPOSED_MEMBERS, false);
   m_SortingToggles[Function::SELECTED] = true;
+  m_Type = DataViewType::FUNCTIONS;
 }
 
 //-----------------------------------------------------------------------------

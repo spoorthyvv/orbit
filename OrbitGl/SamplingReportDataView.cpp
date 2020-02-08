@@ -18,6 +18,7 @@
 SamplingReportDataView::SamplingReportDataView()
     : m_CallstackDataView(nullptr) {
   m_SortingToggles.resize(SamplingColumn::NumColumns, false);
+  m_Type = DataViewType::SAMPLING;
 }
 
 //-----------------------------------------------------------------------------

@@ -9,6 +9,7 @@
 #include "App.h"
 #include "CallStackDataView.h"
 #include "Core.h"
+#include "DataView.h"
 #include "FunctionDataView.h"
 #include "GlobalDataView.h"
 #include "LiveFunctionDataView.h"
@@ -24,52 +25,75 @@
 #include "TypeDataView.h"
 
 //-----------------------------------------------------------------------------
-DataView::~DataView() {
-  if (GOrbitApp) {
-    GOrbitApp->Unregister(this);
-  }
-}
+DataView::~DataView() {}
 
 //-----------------------------------------------------------------------------
-DataView* DataView::Create(DataViewType a_Type) {
-  DataView* model = nullptr;
+std::shared_ptr<DataView> DataView::Create(DataViewType a_Type) {
   switch (a_Type) {
-    case DataViewType::FUNCTIONS:
-      model = new FunctionsDataView();
-      break;
-    case DataViewType::TYPES:
-      model = new TypesDataView();
-      break;
-    case DataViewType::LIVEFUNCTIONS:
-      model = new LiveFunctionsDataView();
-      break;
-    case DataViewType::CALLSTACK:
-      model = new CallStackDataView();
-      break;
-    case DataViewType::GLOBALS:
-      model = new GlobalsDataView();
-      break;
-    case DataViewType::MODULES:
-      model = new ModulesDataView();
-      break;
-    case DataViewType::SAMPLING:
-      model = new SamplingReportDataView();
-      break;
-    case DataViewType::PROCESSES:
-      model = new ProcessesDataView();
-      break;
-    case DataViewType::SESSIONS:
-      model = new SessionsDataView();
-      break;
-    case DataViewType::LOG:
-      model = new LogDataView();
-      break;
+    case DataViewType::FUNCTIONS: {
+      auto dataView = std::make_shared<FunctionsDataView>();
+      GOrbitApp->RegisterFunctionsDataView(dataView);
+      return std::static_pointer_cast<DataView>(dataView);
+    }
+    case DataViewType::TYPES: {
+      auto dataView = std::make_shared<TypesDataView>();
+      GOrbitApp->RegisterTypesDataView(dataView);
+      return std::static_pointer_cast<DataView>(dataView);
+    }
+    case DataViewType::LIVEFUNCTIONS: {
+      auto dataView = std::make_shared<LiveFunctionsDataView>();
+      GOrbitApp->RegisterLiveFunctionsDataView(dataView);
+      return std::static_pointer_cast<DataView>(dataView);
+    }
+    case DataViewType::CALLSTACK: {
+      auto dataView = std::make_shared<CallStackDataView>();
+      GOrbitApp->RegisterCallStackDataView(dataView);
+      return std::static_pointer_cast<DataView>(dataView);
+    }
+    case DataViewType::GLOBALS: {
+      auto dataView = std::make_shared<GlobalsDataView>();
+      GOrbitApp->RegisterGlobalsDataView(dataView);
+      return std::static_pointer_cast<DataView>(dataView);
+    }
+    case DataViewType::MODULES: {
+      auto dataView = std::make_shared<ModulesDataView>();
+      GOrbitApp->RegisterModulesDataView(dataView);
+      return std::static_pointer_cast<DataView>(dataView);
+    }
+    case DataViewType::SAMPLING: {
+      auto dataView = std::make_shared<SamplingReportDataView>();
+      return std::static_pointer_cast<DataView>(dataView);
+    }
+    case DataViewType::PROCESSES: {
+      auto dataView = std::make_shared<ProcessesDataView>();
+      GOrbitApp->RegisterProcessesDataView(dataView);
+      return std::static_pointer_cast<DataView>(dataView);
+    }
+    case DataViewType::SESSIONS: {
+      auto dataView = std::make_shared<SessionsDataView>();
+      GOrbitApp->RegisterSessionsDataView(dataView);
+      return std::static_pointer_cast<DataView>(dataView);
+    }
+    case DataViewType::LOG: {
+      auto dataView = std::make_shared<LogDataView>();
+      GOrbitApp->RegisterOutputLog(dataView);
+      return std::static_pointer_cast<DataView>(dataView);
+    }
     default:
       break;
   }
 
-  model->m_Type = a_Type;
-  return model;
+  return nullptr;
+
+  /*GOrbitApp->RegisterCallStackDataView(this);
+  GOrbitApp->RegisterCaptureWindow(this);
+  GOrbitApp->RegisterFunctionsDataView(this);
+  GOrbitApp->RegisterGlobalsDataView(this);
+  GOrbitApp->RegisterOutputLog(this);
+  GOrbitApp->RegisterProcessesDataView(this);
+  GOrbitApp->RegisterRuleEditor(this);
+  GOrbitApp->RegisterSessionsDataView(this);
+  GOrbitApp->RegisterTypesDataView(this);*/
 }
 
 //-----------------------------------------------------------------------------

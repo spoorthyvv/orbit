@@ -10,9 +10,8 @@
 
 //-----------------------------------------------------------------------------
 ModulesDataView::ModulesDataView() {
+  m_Type = DataViewType::MODULES;
   m_SortingToggles.resize(MDV_NumColumns, false);
-
-  GOrbitApp->RegisterModulesDataView(this);
 }
 
 //-----------------------------------------------------------------------------

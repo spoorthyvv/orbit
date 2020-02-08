@@ -505,7 +505,7 @@ void RuleEditorWindow::Draw(const char* title, bool* p_opened, ImVec2* a_Size) {
 
 //-----------------------------------------------------------------------------
 RuleEditor::RuleEditor() : GlCanvas() {
-  GOrbitApp->RegisterRuleEditor(this);
+  m_Type = GlPanel::RULE_EDITOR;
   GTcpServer->AddCallback(Msg_SavedContext, [=](const Message& a_Msg) {
     this->OnReceiveMessage(a_Msg);
   });

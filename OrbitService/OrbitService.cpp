@@ -12,9 +12,6 @@ OrbitService::OrbitService() {
   GOrbitApp->SetHeadless(true);
   GOrbitApp->SetCommandLineArguments({"headless"});
   GOrbitApp->PostInit();
-
-  DataView::Create(DataViewType::PROCESSES);
-  DataView::Create(DataViewType::MODULES);
 }
 
 //-----------------------------------------------------------------------------

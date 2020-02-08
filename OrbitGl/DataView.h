@@ -3,10 +3,13 @@
 //-----------------------------------
 #pragma once
 
+#include <memory>
 #include <string>
 #include <vector>
 
 #include "DataViewTypes.h"
+
+class GlPanel;
 
 //-----------------------------------------------------------------------------
 class DataView {
@@ -19,7 +22,7 @@ class DataView {
 
   ~DataView();
 
-  static DataView* Create(DataViewType a_Type);
+  static std::shared_ptr<DataView> Create(DataViewType a_Type);
 
   virtual void SetAsMainInstance() {}
   virtual const std::vector<std::wstring>& GetColumnHeaders();
@@ -54,7 +57,7 @@ class DataView {
     return s;
   }
   virtual std::wstring GetLabel() { return L""; }
-  virtual void SetGlPanel(class GlPanel* /*a_GlPanel*/) {}
+  virtual void SetGlPanel(std::shared_ptr<GlPanel> /*a_GlPanel*/) {}
   virtual void LinkDataView(DataView* /*a_DataView*/) {}
   virtual bool ScrollToBottom() { return false; }
   virtual bool SkipTimer() { return false; }

@@ -31,10 +31,10 @@ enum Columns {
 
 //-----------------------------------------------------------------------------
 LiveFunctionsDataView::LiveFunctionsDataView() {
-  GOrbitApp->RegisterLiveFunctionsDataView(this);
   m_SortingToggles.resize(LiveFunction::NUM_EXPOSED_MEMBERS, false);
   m_UpdatePeriodMs = 300;
   m_LastSortedColumn = 3; /*Count*/
+  m_Type = DataViewType::LIVEFUNCTIONS;
   GetColumnHeaders();
   OnDataChanged();
 }

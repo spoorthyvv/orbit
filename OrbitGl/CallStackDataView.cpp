@@ -14,12 +14,12 @@
 #include "absl/strings/str_format.h"
 
 //----------------------------------------------------------------------------
-CallStackDataView::CallStackDataView() : m_CallStack(nullptr) {}
+CallStackDataView::CallStackDataView() : m_CallStack(nullptr) {
+  m_Type = DataViewType::CALLSTACK;
+}
 
 //-----------------------------------------------------------------------------
-void CallStackDataView::SetAsMainInstance() {
-  GOrbitApp->RegisterCallStackDataView(this);
-}
+void CallStackDataView::SetAsMainInstance() {}
 
 //-----------------------------------------------------------------------------
 size_t CallStackDataView::GetNumElements() { return m_Indices.size(); }

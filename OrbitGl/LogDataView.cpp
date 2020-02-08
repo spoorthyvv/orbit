@@ -12,7 +12,7 @@ std::vector<float> LogDataView::s_HeaderRatios;
 
 //-----------------------------------------------------------------------------
 LogDataView::LogDataView() {
-  GOrbitApp->RegisterOutputLog(this);
+  m_Type = DataViewType::LOG;
   GTcpServer->AddCallback(Msg_OrbitLog, [=](const Message& a_Msg) {
     this->OnReceiveMessage(a_Msg);
   });

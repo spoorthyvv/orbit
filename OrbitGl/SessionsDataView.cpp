@@ -15,8 +15,8 @@
 
 //-----------------------------------------------------------------------------
 SessionsDataView::SessionsDataView() {
+  m_Type = DataViewType::SESSIONS;
   m_SortingToggles.resize(SDV_NumColumns, false);
-  GOrbitApp->RegisterSessionsDataView(this);
 }
 
 //-----------------------------------------------------------------------------

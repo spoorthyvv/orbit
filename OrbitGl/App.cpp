@@ -456,6 +456,8 @@ void OrbitApp::PostInit() {
     glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGB | GLUT_DEPTH);
     GetDesktopResolution(GOrbitApp->m_ScreenRes[0], GOrbitApp->m_ScreenRes[1]);
   } else {
+    DataView::Create(DataViewType::PROCESSES);
+    DataView::Create(DataViewType::MODULES);
     ConnectionManager::Get().InitAsService();
   }
 }
@@ -682,8 +684,8 @@ void OrbitApp::MainTick() {
   }
 
   if (Capture::GProcessToInject != L"") {
-    std::cout << "Injecting into "
-              << Capture::GTargetProcess->GetFullName() << std::endl;
+    std::cout << "Injecting into " << Capture::GTargetProcess->GetFullName()
+              << std::endl;
     std::cout << "Orbit host: " << ws2s(Capture::GCaptureHost) << std::endl;
     GOrbitApp->SelectProcess(Capture::GProcessToInject);
     Capture::InjectRemote();
@@ -717,13 +719,15 @@ void OrbitApp::CheckForUpdate() {
 std::string OrbitApp::GetVersion() { return OrbitVersion::GetVersion(); }
 
 //-----------------------------------------------------------------------------
-void OrbitApp::RegisterProcessesDataView(ProcessesDataView* a_Processes) {
+void OrbitApp::RegisterProcessesDataView(
+    std::shared_ptr<ProcessesDataView> a_Processes) {
   assert(m_ProcessesDataView == nullptr);
   m_ProcessesDataView = a_Processes;
 }
 
 //-----------------------------------------------------------------------------
-void OrbitApp::RegisterModulesDataView(ModulesDataView* a_Modules) {
+void OrbitApp::RegisterModulesDataView(
+    std::shared_ptr<ModulesDataView> a_Modules) {
   assert(m_ModulesDataView == nullptr);
   assert(m_ProcessesDataView != nullptr);
   m_ModulesDataView = a_Modules;
@@ -731,58 +735,62 @@ void OrbitApp::RegisterModulesDataView(ModulesDataView* a_Modules) {
 }
 
 //-----------------------------------------------------------------------------
-void OrbitApp::RegisterFunctionsDataView(FunctionsDataView* a_Functions) {
+void OrbitApp::RegisterFunctionsDataView(
+    std::shared_ptr<FunctionsDataView> a_Functions) {
   m_FunctionsDataView = a_Functions;
-  m_Panels.push_back(a_Functions);
+  m_Panels.push_back(std::static_pointer_cast<DataView>(a_Functions));
 }
 
 //-----------------------------------------------------------------------------
 void OrbitApp::RegisterLiveFunctionsDataView(
-    LiveFunctionsDataView* a_Functions) {
+    std::shared_ptr<LiveFunctionsDataView> a_Functions) {
   m_LiveFunctionsDataView = a_Functions;
-  m_Panels.push_back(a_Functions);
+  m_Panels.push_back(std::static_pointer_cast<DataView>(a_Functions));
 }
 
 //-----------------------------------------------------------------------------
-void OrbitApp::RegisterCallStackDataView(CallStackDataView* a_Callstack) {
+void OrbitApp::RegisterCallStackDataView(
+    std::shared_ptr<CallStackDataView> a_Callstack) {
   assert(m_CallStackDataView == nullptr);
   m_CallStackDataView = a_Callstack;
-  m_Panels.push_back(a_Callstack);
+  m_Panels.push_back(std::static_pointer_cast<DataView>(a_Callstack));
 }
 
 //-----------------------------------------------------------------------------
-void OrbitApp::RegisterTypesDataView(TypesDataView* a_Types) {
+void OrbitApp::RegisterTypesDataView(std::shared_ptr<TypesDataView> a_Types) {
   m_TypesDataView = a_Types;
-  m_Panels.push_back(a_Types);
+  m_Panels.push_back(std::static_pointer_cast<DataView>(a_Types));
 }
 
 //-----------------------------------------------------------------------------
-void OrbitApp::RegisterGlobalsDataView(GlobalsDataView* a_Globals) {
+void OrbitApp::RegisterGlobalsDataView(
+    std::shared_ptr<GlobalsDataView> a_Globals) {
   m_GlobalsDataView = a_Globals;
-  m_Panels.push_back(a_Globals);
+  m_Panels.push_back(std::static_pointer_cast<DataView>(a_Globals));
 }
 
 //-----------------------------------------------------------------------------
-void OrbitApp::RegisterSessionsDataView(SessionsDataView* a_Sessions) {
+void OrbitApp::RegisterSessionsDataView(
+    std::shared_ptr<SessionsDataView> a_Sessions) {
   m_SessionsDataView = a_Sessions;
-  m_Panels.push_back(a_Sessions);
+  m_Panels.push_back(std::static_pointer_cast<DataView>(a_Sessions));
   ListSessions();
 }
 
 //-----------------------------------------------------------------------------
-void OrbitApp::RegisterCaptureWindow(CaptureWindow* a_Capture) {
+void OrbitApp::RegisterCaptureWindow(std::shared_ptr<CaptureWindow> a_Capture) {
   assert(m_CaptureWindow == nullptr);
   m_CaptureWindow = a_Capture;
 }
 
 //-----------------------------------------------------------------------------
-void OrbitApp::RegisterOutputLog(LogDataView* a_Log) {
+void OrbitApp::RegisterOutputLog(std::shared_ptr<LogDataView> a_Log) {
   assert(m_Log == nullptr);
   m_Log = a_Log;
 }
 
 //-----------------------------------------------------------------------------
-void OrbitApp::RegisterRuleEditor(RuleEditor* a_RuleEditor) {
+void OrbitApp::RegisterRuleEditor(std::shared_ptr<RuleEditor> a_RuleEditor) {
   assert(m_RuleEditor == nullptr);
   m_RuleEditor = a_RuleEditor;
 }
@@ -929,7 +937,7 @@ void OrbitApp::OnLoadSession(const std::wstring a_FileName) {
     cereal::BinaryInputArchive archive(file);
     archive(*session);
     if (SelectProcess(
-        s2ws(Path::GetFileName(ws2s(session->m_ProcessFullPath))))) {
+            s2ws(Path::GetFileName(ws2s(session->m_ProcessFullPath))))) {
       session->m_FileName = s2ws(file_name);
       Capture::LoadSession(session);
       Capture::GPresetToLoad = L"";
@@ -986,7 +994,7 @@ void OrbitApp::LogMsg(const std::wstring& a_Msg) { ORBIT_LOG(a_Msg); }
 
 //-----------------------------------------------------------------------------
 void OrbitApp::FireRefreshCallbacks(DataViewType a_Type) {
-  for (DataView* panel : m_Panels) {
+  for (auto panel : m_Panels) {
     if (a_Type == DataViewType::ALL || a_Type == panel->GetType()) {
       panel->OnDataChanged();
     }
@@ -1052,9 +1060,9 @@ void OrbitApp::ToggleCapture() {
 }
 
 //-----------------------------------------------------------------------------
-void OrbitApp::Unregister(DataView* a_Model) {
+void OrbitApp::Unregister(std::shared_ptr<DataView> a_DataView) {
   for (size_t i = 0; i < m_Panels.size(); ++i) {
-    if (m_Panels[i] == a_Model) {
+    if (m_Panels[i] == a_DataView) {
       m_Panels.erase(m_Panels.begin() + i);
     }
   }

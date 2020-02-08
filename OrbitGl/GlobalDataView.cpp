@@ -15,11 +15,10 @@
 
 //-----------------------------------------------------------------------------
 GlobalsDataView::GlobalsDataView() {
+  m_Type = DataViewType::GLOBALS;
   m_SortingToggles.resize(Variable::NUM_EXPOSED_MEMBERS, false);
   m_SortingToggles[Variable::SELECTED] = true;
   OnDataChanged();
-
-  GOrbitApp->RegisterGlobalsDataView(this);
 }
 
 //-----------------------------------------------------------------------------

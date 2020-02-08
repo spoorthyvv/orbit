@@ -8,7 +8,9 @@
 
 //-----------------------------------------------------------------------------
 PluginCanvas::PluginCanvas(Orbit::Plugin* a_Plugin)
-    : GlCanvas(), m_Plugin(a_Plugin) {}
+    : GlCanvas(), m_Plugin(a_Plugin) {
+  m_Type = GlPanel::PLUGIN;
+}
 
 //-----------------------------------------------------------------------------
 PluginCanvas::~PluginCanvas() {}

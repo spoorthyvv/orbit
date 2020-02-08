@@ -288,8 +288,7 @@ void LinuxEventTracerThread::Run(
               "sched switches: %lu; "
               "samples: %lu; "
               "u(ret)probes: %lu\n",
-              EVENT_COUNT_WINDOW_S,
-              sched_switch_count / EVENT_COUNT_WINDOW_S,
+              EVENT_COUNT_WINDOW_S, sched_switch_count / EVENT_COUNT_WINDOW_S,
               sample_count / EVENT_COUNT_WINDOW_S,
               uprobes_count / EVENT_COUNT_WINDOW_S);
           sched_switch_count = 0;

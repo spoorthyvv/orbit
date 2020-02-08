@@ -5,6 +5,7 @@
 
 #include <QOpenGLFunctions>
 #include <QOpenGLWidget>
+#include <memory>
 
 #include "../OrbitGl/GlPanel.h"
 
@@ -23,7 +24,7 @@ class OrbitGLWidget : public QOpenGLWidget, protected QOpenGLFunctions {
   void paintGL();
   bool eventFilter(QObject* object, QEvent* event) override;
   void TakeScreenShot();
-  GlPanel* GetPanel() { return m_OrbitPanel; }
+  std::shared_ptr<GlPanel> GetPanel() { return m_OrbitPanel; }
   void PrintContextInformation();
 
   void mousePressEvent(QMouseEvent* event);
@@ -40,6 +41,6 @@ class OrbitGLWidget : public QOpenGLWidget, protected QOpenGLFunctions {
   void OnMenuClicked(int a_Index);
 
  private:
-  GlPanel* m_OrbitPanel;
+  std::shared_ptr<GlPanel> m_OrbitPanel;
   QOpenGLDebugLogger* m_DebugLogger;
 };

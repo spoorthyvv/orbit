@@ -9,6 +9,7 @@
 
 //-----------------------------------------------------------------------------
 HomeWindow::HomeWindow() {
+  m_Type = GlPanel::DEBUG;
   m_DrawDebugDisplay = false;
   m_DrawTestUI = false;
   m_DrawLog = true;

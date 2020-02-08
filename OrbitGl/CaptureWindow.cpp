@@ -67,8 +67,6 @@ CaptureWindow::CaptureWindow() {
   m_VerticalSlider.SetVertical();
   m_VerticalSlider.SetDragCallback(
       [&](float a_Ratio) { this->OnVerticalDrag(a_Ratio); });
-
-  GOrbitApp->RegisterCaptureWindow(this);
 }
 
 //-----------------------------------------------------------------------------

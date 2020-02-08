@@ -6,6 +6,8 @@
 #include "DataView.h"
 #include "ProcessUtils.h"
 
+class ModulesDataView;
+
 class ProcessesDataView : public DataView {
  public:
   ProcessesDataView();
@@ -25,7 +27,7 @@ class ProcessesDataView : public DataView {
   void UpdateProcessList();
   void SetRemoteProcessList(std::shared_ptr<ProcessList> a_RemoteProcessList);
   void SetRemoteProcess(std::shared_ptr<Process> a_Process);
-  void SetModulesDataView(class ModulesDataView* a_ModulesCtrl) {
+  void SetModulesDataView(std::shared_ptr<ModulesDataView> a_ModulesCtrl) {
     m_ModulesDataView = a_ModulesCtrl;
   }
   void Refresh();
@@ -49,7 +51,7 @@ class ProcessesDataView : public DataView {
 
   ProcessList m_ProcessList;
   std::shared_ptr<Process> m_RemoteProcess;
-  ModulesDataView* m_ModulesDataView;
+  std::shared_ptr<ModulesDataView> m_ModulesDataView;
   std::shared_ptr<Process> m_SelectedProcess;
   static std::vector<float> s_HeaderRatios;
   bool m_IsRemote;

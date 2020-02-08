@@ -246,9 +246,7 @@ std::string Path::GetAppDataPath() {
   return path;
 }
 
-std::string Path::GetMainDrive() {
-  return GetEnvVar("SystemDrive");
-}
+std::string Path::GetMainDrive() { return GetEnvVar("SystemDrive"); }
 
 std::string Path::GetSourceRoot() {
   std::string currentDir = GetExecutablePath();
@@ -339,7 +337,7 @@ std::vector<std::string> Path::ListFiles(
 }
 
 std::vector<std::string> Path::ListFiles(const std::string& a_Dir,
-                                          const std::string& a_Filter) {
+                                         const std::string& a_Filter) {
   return ListFiles(a_Dir, [&](const std::string& a_Name) {
     return Contains(a_Name, a_Filter);
   });

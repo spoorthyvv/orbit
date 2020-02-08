@@ -2,6 +2,7 @@
 // Copyright Pierric Gimmig 2013-2017
 //-----------------------------------
 #pragma once
+#include <memory>
 #include <string>
 #include <vector>
 
@@ -12,7 +13,8 @@ class GlPanel {
 
   enum Type { CAPTURE, IMMEDIATE, VISUALIZE, RULE_EDITOR, PLUGIN, DEBUG };
 
-  static GlPanel* Create(Type a_Type, void* a_UserData = nullptr);
+  static std::shared_ptr<GlPanel> Create(Type a_Type,
+                                         void* a_UserData = nullptr);
 
   virtual void Initialize();
   virtual void Resize(int a_Width, int a_Height);

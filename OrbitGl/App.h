@@ -18,6 +18,18 @@
 struct CallStack;
 struct ContextSwitch;
 class Process;
+class DataView;
+class ProcessesDataView;
+class ModulesDataView;
+class FunctionsDataView;
+class LiveFunctionsDataView;
+class CallStackDataView;
+class TypesDataView;
+class GlobalsDataView;
+class SessionsDataView;
+class CaptureWindow;
+class LogDataView;
+class RuleEditor;
 
 //-----------------------------------------------------------------------------
 class OrbitApp : public CoreApp {
@@ -85,19 +97,23 @@ class OrbitApp : public CoreApp {
 
   int* GetScreenRes() { return m_ScreenRes; }
 
-  void RegisterProcessesDataView(class ProcessesDataView* a_Processes);
-  void RegisterModulesDataView(class ModulesDataView* a_Modules);
-  void RegisterFunctionsDataView(class FunctionsDataView* a_Functions);
-  void RegisterLiveFunctionsDataView(class LiveFunctionsDataView* a_Functions);
-  void RegisterCallStackDataView(class CallStackDataView* a_Callstack);
-  void RegisterTypesDataView(class TypesDataView* a_Types);
-  void RegisterGlobalsDataView(class GlobalsDataView* a_Globals);
-  void RegisterSessionsDataView(class SessionsDataView* a_Sessions);
-  void RegisterCaptureWindow(class CaptureWindow* a_Capture);
-  void RegisterOutputLog(class LogDataView* a_Log);
-  void RegisterRuleEditor(class RuleEditor* a_RuleEditor);
+  void RegisterProcessesDataView(
+      std::shared_ptr<ProcessesDataView> a_Processes);
+  void RegisterModulesDataView(std::shared_ptr<ModulesDataView> a_Modules);
+  void RegisterFunctionsDataView(
+      std::shared_ptr<FunctionsDataView> a_Functions);
+  void RegisterLiveFunctionsDataView(
+      std::shared_ptr<LiveFunctionsDataView> a_Functions);
+  void RegisterCallStackDataView(
+      std::shared_ptr<CallStackDataView> a_Callstack);
+  void RegisterTypesDataView(std::shared_ptr<TypesDataView> a_Types);
+  void RegisterGlobalsDataView(std::shared_ptr<GlobalsDataView> a_Globals);
+  void RegisterSessionsDataView(std::shared_ptr<SessionsDataView> a_Sessions);
+  void RegisterCaptureWindow(std::shared_ptr<CaptureWindow> a_Capture);
+  void RegisterOutputLog(std::shared_ptr<LogDataView> a_Log);
+  void RegisterRuleEditor(std::shared_ptr<RuleEditor> a_RuleEditor);
 
-  void Unregister(class DataView* a_Model);
+  void Unregister(std::shared_ptr<DataView> a_DataView);
   bool SelectProcess(const std::wstring& a_Process);
   bool SelectProcess(uint32_t a_ProcessID);
   bool Inject(unsigned long a_ProcessId);
@@ -203,8 +219,8 @@ class OrbitApp : public CoreApp {
   bool IsRemote() const { return m_IsRemote; }
   bool HasTcpServer() const { return !IsRemote(); }
 
-  RuleEditor* GetRuleEditor() { return m_RuleEditor; }
-  virtual const std::unordered_map<DWORD64, std::shared_ptr<class Rule> >*
+  std::shared_ptr<RuleEditor> GetRuleEditor() { return m_RuleEditor; }
+  virtual const std::unordered_map<DWORD64, std::shared_ptr<class Rule>>*
   GetRules();
 
  private:
@@ -214,30 +230,30 @@ class OrbitApp : public CoreApp {
   std::vector<WatchCallback> m_UpdateWatchCallbacks;
   std::vector<SamplingReportCallback> m_SamplingReportsCallbacks;
   std::vector<SamplingReportCallback> m_SelectionReportCallbacks;
-  std::vector<class DataView*> m_Panels;
+  std::vector<std::shared_ptr<DataView>> m_Panels;
   FindFileCallback m_FindFileCallback;
   SaveFileCallback m_SaveFileCallback;
   ClipboardCallback m_ClipboardCallback;
   bool m_Headless = false;
   bool m_IsRemote = false;
 
-  ProcessesDataView* m_ProcessesDataView = nullptr;
-  ModulesDataView* m_ModulesDataView = nullptr;
-  FunctionsDataView* m_FunctionsDataView = nullptr;
-  LiveFunctionsDataView* m_LiveFunctionsDataView = nullptr;
-  CallStackDataView* m_CallStackDataView = nullptr;
-  TypesDataView* m_TypesDataView = nullptr;
-  GlobalsDataView* m_GlobalsDataView = nullptr;
-  SessionsDataView* m_SessionsDataView = nullptr;
-  CaptureWindow* m_CaptureWindow = nullptr;
-  LogDataView* m_Log = nullptr;
-  RuleEditor* m_RuleEditor = nullptr;
+  std::shared_ptr<ProcessesDataView> m_ProcessesDataView = nullptr;
+  std::shared_ptr<ModulesDataView> m_ModulesDataView = nullptr;
+  std::shared_ptr<FunctionsDataView> m_FunctionsDataView = nullptr;
+  std::shared_ptr<LiveFunctionsDataView> m_LiveFunctionsDataView = nullptr;
+  std::shared_ptr<CallStackDataView> m_CallStackDataView = nullptr;
+  std::shared_ptr<TypesDataView> m_TypesDataView = nullptr;
+  std::shared_ptr<GlobalsDataView> m_GlobalsDataView = nullptr;
+  std::shared_ptr<SessionsDataView> m_SessionsDataView = nullptr;
+  std::shared_ptr<CaptureWindow> m_CaptureWindow = nullptr;
+  std::shared_ptr<LogDataView> m_Log = nullptr;
+  std::shared_ptr<RuleEditor> m_RuleEditor = nullptr;
   int m_ScreenRes[2];
   bool m_HasPromptedForUpdate = false;
   bool m_NeedsThawing = false;
   bool m_UnrealEnabled = false;
 
-  std::vector<std::shared_ptr<class SamplingReport> > m_SamplingReports;
+  std::vector<std::shared_ptr<class SamplingReport>> m_SamplingReports;
   std::map<std::wstring, std::wstring> m_FileMapping;
   std::vector<std::string> m_SymbolDirectories;
   std::function<void(const std::wstring&)> m_UiCallback;
@@ -256,7 +272,7 @@ class OrbitApp : public CoreApp {
   std::wstring m_User;
   std::wstring m_License;
 
-  std::queue<std::shared_ptr<struct Module> > m_ModulesToLoad;
+  std::queue<std::shared_ptr<struct Module>> m_ModulesToLoad;
   std::vector<std::string> m_PostInitArguments;
 
   class EventTracer* m_EventTracer = nullptr;

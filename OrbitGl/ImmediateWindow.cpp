@@ -9,6 +9,7 @@
 //-----------------------------------------------------------------------------
 ImmediateWindow::ImmediateWindow() {
   assert(0);
+  m_Type = GlPanel::IMMEDIATE;
   m_ImmediateWindow.FitCanvas();
 }
 
