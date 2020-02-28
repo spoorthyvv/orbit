@@ -28,7 +28,6 @@ void TracerThread::Run(
   // perf_event_open refers to cores as "CPUs".
   int32_t num_cpus = GetNumCores();
 
-  trace_context_switches_ = false;
   if (trace_context_switches_) {
     // Record context switches from all cores for all processes.
     for (int32_t cpu = 0; cpu < num_cpus; cpu++) {
