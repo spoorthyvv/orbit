@@ -77,10 +77,14 @@ class UprobesUnwindingVisitor : public PerfEventVisitor {
   LibunwindstackUnwinder unwinder_{};
   UprobesCallstackManager callstack_manager_{};
 
+  void RegisterTimeStamp(pid_t thread_id, uint64_t ts);
+
   TracerListener* listener_ = nullptr;
 
   static std::vector<CallstackFrame> CallstackFramesFromLibunwindstackFrames(
       const std::vector<unwindstack::FrameData>& libunwindstack_frames);
+
+  absl::flat_hash_map<pid_t, uint64_t> latest_timestamp_per_thread_{};
 };
 
 }  // namespace LinuxTracing

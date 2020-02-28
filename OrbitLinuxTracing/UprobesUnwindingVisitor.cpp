@@ -1,4 +1,5 @@
 #include "UprobesUnwindingVisitor.h"
+#include <iostream>
 
 namespace LinuxTracing {
 
@@ -115,32 +116,48 @@ void UprobesUnwindingVisitor::visit(StackSamplePerfEvent* event) {
   }
 }
 
+void UprobesUnwindingVisitor::RegisterTimeStamp(pid_t thread_id, uint64_t ts) {
+  uint64_t latest = latest_timestamp_per_thread_[thread_id];
+  if( ts < latest )
+  {
+    std::cout << "=== EVENT OUT OF ORDRE ===\n";
+  }
+
+  latest_timestamp_per_thread_[thread_id] = ts;
+}
+
 void UprobesUnwindingVisitor::visit(UprobePerfEventWithStack* event) {
+  RegisterTimeStamp(event->TID(), event->Timestamp());
   FunctionBegin function_begin{
       event->TID(), event->GetFunction()->VirtualAddress(), event->Timestamp()};
   if (listener_ != nullptr) {
     listener_->OnFunctionBegin(function_begin);
   }
 
-  const std::vector<unwindstack::FrameData>& callstack = unwinder_.Unwind(
-      event->Registers(), event->StackDump(), event->StackSize());
-  const std::vector<unwindstack::FrameData>& full_callstack =
-      callstack_manager_.ProcessUprobesCallstack(event->TID(), callstack);
+  return;
+  if(event->StackSize()) {
+    const std::vector<unwindstack::FrameData>& callstack = unwinder_.Unwind(
+        event->Registers(), event->StackDump(), event->StackSize());
+    const std::vector<unwindstack::FrameData>& full_callstack =
+        callstack_manager_.ProcessUprobesCallstack(event->TID(), callstack);
 
-  // TODO: Callstacks at the beginning and/or end of a dynamically-instrumented
-  //  function could alter the statistics of time-based callstack sampling.
-  //  Consider not/conditionally adding these callstacks to the trace.
-  if (!full_callstack.empty()) {
-    if (listener_ != nullptr) {
-      Callstack returned_callstack{
-          event->TID(), CallstackFramesFromLibunwindstackFrames(full_callstack),
-          event->Timestamp()};
-      listener_->OnCallstack(returned_callstack);
+    // TODO: Callstacks at the beginning and/or end of a dynamically-instrumented
+    //  function could alter the statistics of time-based callstack sampling.
+    //  Consider not/conditionally adding these callstacks to the trace.
+    if (!full_callstack.empty()) {
+      if (listener_ != nullptr) {
+        Callstack returned_callstack{
+            event->TID(),
+            CallstackFramesFromLibunwindstackFrames(full_callstack),
+            event->Timestamp()};
+        listener_->OnCallstack(returned_callstack);
+      }
     }
   }
 }
 
 void UprobesUnwindingVisitor::visit(UretprobePerfEventWithStack* event) {
+  RegisterTimeStamp(event->TID(), event->Timestamp());
   FunctionEnd function_end{event->TID(), event->GetFunction()->VirtualAddress(),
                            event->Timestamp()};
   if (listener_ != nullptr) {

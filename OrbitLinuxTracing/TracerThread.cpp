@@ -8,24 +8,32 @@
 #include "Utils.h"
 #include "absl/container/flat_hash_map.h"
 
+#include <iostream>
+
 namespace LinuxTracing {
 
-// TODO: Refactor this huge method.
-void TracerThread::Run(
-    const std::shared_ptr<std::atomic<bool>>& exit_requested) {
+struct TracerThreadData {
   absl::flat_hash_map<int32_t, PerfEventRingBuffer> fds_to_ring_buffer;
   absl::flat_hash_map<pid_t, int32_t> threads_to_fd;
   absl::flat_hash_map<int32_t, const Function*> uprobe_fds_to_function;
   absl::flat_hash_map<int32_t, const Function*> uretprobe_fds_to_function;
+};
+
+// TODO: Refactor this huge method.
+void TracerThread::Run(
+    const std::shared_ptr<std::atomic<bool>>& exit_requested) {
+
+  data_ = std::make_shared<TracerThreadData>();
 
   // perf_event_open refers to cores as "CPUs".
   int32_t num_cpus = GetNumCores();
 
+  trace_context_switches_ = false;
   if (trace_context_switches_) {
     // Record context switches from all cores for all processes.
     for (int32_t cpu = 0; cpu < num_cpus; cpu++) {
       int32_t context_switch_fd = cpu_context_switch_event_open(cpu);
-      fds_to_ring_buffer.emplace(context_switch_fd,
+      data_->fds_to_ring_buffer.emplace(context_switch_fd,
                                  PerfEventRingBuffer{context_switch_fd});
     }
   }
@@ -42,16 +50,16 @@ void TracerThread::Run(
   if (trace_instrumented_functions_) {
     for (const auto& function : instrumented_functions_) {
       for (int32_t cpu = 0; cpu < num_cpus; cpu++) {
-        int uprobe_fd = uprobe_stack_event_open(function.BinaryPath().c_str(),
+        int uprobe_fd = uprobe_event_open(function.BinaryPath().c_str(),
                                                 function.FileOffset(), -1, cpu);
-        fds_to_ring_buffer.emplace(uprobe_fd, PerfEventRingBuffer{uprobe_fd});
-        uprobe_fds_to_function.emplace(uprobe_fd, &function);
+        data_->fds_to_ring_buffer.emplace(uprobe_fd, PerfEventRingBuffer{uprobe_fd});
+        data_->uprobe_fds_to_function.emplace(uprobe_fd, &function);
 
-        int uretprobe_fd = uretprobe_stack_event_open(
+        int uretprobe_fd = uretprobe_event_open(
             function.BinaryPath().c_str(), function.FileOffset(), -1, cpu);
-        fds_to_ring_buffer.emplace(uretprobe_fd,
+        data_->fds_to_ring_buffer.emplace(uretprobe_fd,
                                    PerfEventRingBuffer{uretprobe_fd});
-        uretprobe_fds_to_function.emplace(uretprobe_fd, &function);
+        data_->uretprobe_fds_to_function.emplace(uretprobe_fd, &function);
       }
     }
   }
@@ -65,8 +73,8 @@ void TracerThread::Run(
 
     if (trace_callstacks_) {
       int sampling_fd = sample_mmap_task_event_open(tid, sampling_period_ns_);
-      fds_to_ring_buffer.emplace(sampling_fd, PerfEventRingBuffer{sampling_fd});
-      threads_to_fd.emplace(tid, sampling_fd);
+      data_->fds_to_ring_buffer.emplace(sampling_fd, PerfEventRingBuffer{sampling_fd});
+      data_->threads_to_fd.emplace(tid, sampling_fd);
     }
   }
 
@@ -74,7 +82,7 @@ void TracerThread::Run(
   //  Consider also polling threads regularly.
 
   // Start recording events.
-  for (const auto& fd_to_ring_buffer : fds_to_ring_buffer) {
+  for (const auto& fd_to_ring_buffer : data_->fds_to_ring_buffer) {
     perf_event_enable(fd_to_ring_buffer.first);
   }
 
@@ -86,6 +94,8 @@ void TracerThread::Run(
   uint64_t uprobes_count = 0;
 
   bool last_iteration_saw_events = false;
+
+  //std::thread stats_thread(&TracerThread::RunStats, this, exit_requested);
 
   while (!(*exit_requested)) {
     // Wait if there was no new event in the last iteration, so that we are not
@@ -105,7 +115,7 @@ void TracerThread::Run(
     // Read and process events from all ring buffers. In order to ensure that no
     // buffer is read constantly while others overflow, we schedule the reading
     // using round-robin like scheduling.
-    for (auto& fd_to_ring_buffer : fds_to_ring_buffer) {
+    for (auto& fd_to_ring_buffer : data_->fds_to_ring_buffer) {
       if (*exit_requested) {
         break;
       }
@@ -113,8 +123,8 @@ void TracerThread::Run(
       const int32_t& fd = fd_to_ring_buffer.first;
       PerfEventRingBuffer& ring_buffer = fd_to_ring_buffer.second;
 
-      bool is_uprobes = uprobe_fds_to_function.count(fd) > 0;
-      bool is_uretprobes = uretprobe_fds_to_function.count(fd) > 0;
+      bool is_uprobes = data_->uprobe_fds_to_function.count(fd) > 0;
+      bool is_uretprobes = data_->uretprobe_fds_to_function.count(fd) > 0;
 
       int32_t read_from_this_buffer = 0;
       // Read up to ROUND_ROBIN_BATCH_SIZE (5) new events.
@@ -195,21 +205,21 @@ void TracerThread::Run(
               // are already iterating over fds_to_ring_buffer.
               fds_to_ring_buffer_to_add.emplace_back(
                   sample_fd, PerfEventRingBuffer{sample_fd});
-              threads_to_fd.emplace(fork.TID(), sample_fd);
+              data_->threads_to_fd.emplace(fork.TID(), sample_fd);
             }
           } break;
 
           case PERF_RECORD_EXIT: {
             auto exit = ring_buffer.ConsumeRecord<ForkPerfEvent>(header);
             if (exit.PID() == pid_) {
-              if (threads_to_fd.count(exit.TID()) > 0) {
-                int32_t sample_fd = threads_to_fd.at(exit.TID());
+              if (data_->threads_to_fd.count(exit.TID()) > 0) {
+                int32_t sample_fd = data_->threads_to_fd.at(exit.TID());
                 perf_event_disable(sample_fd);
                 close(sample_fd);
                 // Do not remove the ring buffer from fds_to_ring_buffer here as
                 // we are already iterating over fds_to_ring_buffer.
                 fds_to_remove.push_back(sample_fd);
-                threads_to_fd.erase(sample_fd);
+                data_->threads_to_fd.erase(sample_fd);
               }
             }
           } break;
@@ -227,7 +237,7 @@ void TracerThread::Run(
             if (is_uprobes) {
               auto sample =
                   ring_buffer.ConsumeRecord<UprobePerfEventWithStack>(header);
-              sample.SetFunction(uprobe_fds_to_function.at(fd));
+              sample.SetFunction(data_->uprobe_fds_to_function.at(fd));
               uprobes_event_processor.AddEvent(
                   fd, std::make_unique<UprobePerfEventWithStack>(
                           std::move(sample)));
@@ -238,7 +248,7 @@ void TracerThread::Run(
               auto sample =
                   ring_buffer.ConsumeRecord<UretprobePerfEventWithStack>(
                       header);
-              sample.SetFunction(uretprobe_fds_to_function.at(fd));
+              sample.SetFunction(data_->uretprobe_fds_to_function.at(fd));
               uprobes_event_processor.AddEvent(
                   fd, std::make_unique<UretprobePerfEventWithStack>(
                           std::move(sample)));
@@ -290,22 +300,49 @@ void TracerThread::Run(
     uprobes_event_processor.ProcessOldEvents();
 
     for (auto& fd_to_ring_buffer_to_add : fds_to_ring_buffer_to_add) {
-      fds_to_ring_buffer.emplace(std::move(fd_to_ring_buffer_to_add));
+      data_->fds_to_ring_buffer.emplace(std::move(fd_to_ring_buffer_to_add));
     }
     for (int32_t fd_to_remove : fds_to_remove) {
-      fds_to_ring_buffer.erase(fd_to_remove);
+      data_->fds_to_ring_buffer.erase(fd_to_remove);
     }
   }
 
+  //std::cout << "stats_thread.join();" << std::endl;
+  //stats_thread.join();
   uprobes_event_processor.ProcessAllEvents();
 
   // Stop recording and close the file descriptors.
-  for (auto& fd_to_ring_buffer : fds_to_ring_buffer) {
+  for (auto& fd_to_ring_buffer : data_->fds_to_ring_buffer) {
     const int32_t& fd = fd_to_ring_buffer.first;
     perf_event_disable(fd);
     close(fd);
   }
-  fds_to_ring_buffer.clear();
+  data_->fds_to_ring_buffer.clear();
 }
 
+void TracerThread::RunStats(const std::shared_ptr<std::atomic<bool>>& exit_requested) {
+  while (!(*exit_requested)) {
+    usleep(5000);
+    std::cout << "------------------" << std::endl;
+
+    // uprobe_fds_to_function;
+    // uretprobe_fds_to_function;
+
+    for( const auto& pair : data_->uprobe_fds_to_function ) {
+      auto fd = pair.first;
+      const Function* function = pair.second;
+      const PerfEventRingBuffer& ring_buffer = data_->fds_to_ring_buffer.at(fd);
+      std::cout << "Ring buffer uprobe    " << fd << " size: "
+                << ring_buffer.GetCurrentSize() << function->BinaryPath() << std::endl;
+    }
+
+    for( const auto& pair : data_->uretprobe_fds_to_function ) {
+      auto fd = pair.first;
+      const Function* function = pair.second;
+      const PerfEventRingBuffer& ring_buffer = data_->fds_to_ring_buffer.at(fd);
+      std::cout << "Ring buffer uretprobe " << fd << " size: "
+                << ring_buffer.GetCurrentSize() << function->BinaryPath() << std::endl;
+    }
+  }
+}
 }  // namespace LinuxTracing

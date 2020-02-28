@@ -58,9 +58,9 @@ std::vector<unwindstack::FrameData> LibunwindstackUnwinder::Unwind(
   // callstacks.
   if (unwinder.LastErrorCode() != 0 &&
       unwinder.frames().back().map_name != "[uprobes]") {
-    ERROR("LibunwindstackUnwinder::Unwind: %s at %#016lx",
-          LibunwindstackErrorString(unwinder.LastErrorCode()).c_str(),
-          unwinder.LastErrorAddress());
+    //ERROR("LibunwindstackUnwinder::Unwind: %s at %#016lx",
+    //      LibunwindstackErrorString(unwinder.LastErrorCode()).c_str(),
+    //      unwinder.LastErrorAddress());
     return {};
   }
 

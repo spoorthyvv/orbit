@@ -57,9 +57,20 @@ PerfEventRingBuffer::~PerfEventRingBuffer() {
   }
 }
 
-bool PerfEventRingBuffer::HasNewData() {
+bool PerfEventRingBuffer::HasNewData() const {
   return metadata_->data_tail + sizeof(perf_event_header) <=
          metadata_->data_head;
+}
+
+uint64_t PerfEventRingBuffer::GetCurrentSize() const {
+  uint64_t head = metadata_->data_head;
+  uint64_t tail = metadata_->data_tail;
+  if( head > tail )
+    return head - tail;
+  else if (head < tail )
+    return (metadata_->size - tail) + (head - reinterpret_cast<uint64_t>(ring_buffer_) );
+  else
+    return 0;
 }
 
 void PerfEventRingBuffer::ReadHeader(perf_event_header* header) {

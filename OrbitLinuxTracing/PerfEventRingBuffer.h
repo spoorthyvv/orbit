@@ -18,7 +18,8 @@ class PerfEventRingBuffer {
   PerfEventRingBuffer(const PerfEventRingBuffer&) = delete;
   PerfEventRingBuffer& operator=(const PerfEventRingBuffer&) = delete;
 
-  bool HasNewData();
+  bool HasNewData() const;
+  uint64_t GetCurrentSize() const;
   void ReadHeader(perf_event_header* header);
   void SkipRecord(const perf_event_header& header);
 
