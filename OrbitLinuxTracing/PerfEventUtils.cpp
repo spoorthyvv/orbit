@@ -129,7 +129,7 @@ int32_t uretprobe_stack_event_open(const char* module, uint64_t function_offset,
 }
 
 int32_t get_tracepoint_id(const char* tracepoint_category,
-                           const char* tracepoint_name) {
+                          const char* tracepoint_name) {
   std::string filename =
       absl::StrFormat("/sys/kernel/debug/tracing/events/%s/%s/id",
                       tracepoint_category, tracepoint_name);

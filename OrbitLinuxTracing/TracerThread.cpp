@@ -14,7 +14,6 @@ namespace LinuxTracing {
 // TODO: Refactor this huge method.
 void TracerThread::Run(
     const std::shared_ptr<std::atomic<bool>>& exit_requested) {
-  //LOG("TracerThread::Run");
   absl::flat_hash_map<int32_t, PerfEventRingBuffer> fds_to_ring_buffer;
   absl::flat_hash_map<pid_t, int32_t> threads_to_fd;
   absl::flat_hash_map<int32_t, const Function*> uprobe_fds_to_function;
@@ -275,8 +274,19 @@ void TracerThread::Run(
               ++uprobes_count;
 
             } else if (is_gpu_tracing) {
-              LOG("GPU Tracing event");
-              ring_buffer.ConsumeRecordVariableSize(header);
+              std::vector<uint8_t> data = ring_buffer.ConsumeRecordVariableSize(header);
+              // The samples we get from the ring buffer still contain the perf_event_header.
+              // In addition, the next 4 bytes after the header are the size of the sample.
+              // That is, the raw sample starts at sizeof(perf_event_header) + 4.
+              int offset = sizeof(header);
+              uint32_t size_of_raw_sample =
+                  *reinterpret_cast<uint32_t*>(&data[0] + offset);
+              LOG("Size of raw sample: %d\n", size_of_raw_sample);
+              offset += sizeof(uint32_t);
+              uint16_t common_type = *reinterpret_cast<uint16_t*>(&data[0] + offset);
+              LOG("Got event with common_type: %d\n", common_type);
+              // TODO: Pass this to a tracepoint event processor that will group triplets
+              // of sw scheduling, hw scheduling, and hw job finish.
             } else {
               auto sample =
                   ring_buffer.ConsumeRecord<StackSamplePerfEvent>(header);

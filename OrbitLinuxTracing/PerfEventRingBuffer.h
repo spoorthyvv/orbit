@@ -45,13 +45,11 @@ class PerfEventRingBuffer {
     return record;
   }
 
-  void ConsumeRecordVariableSize(const perf_event_header& header) {
-    LOG("Got event of size: %d\n", header.size);
+  std::vector<uint8_t> ConsumeRecordVariableSize(const perf_event_header& header) {
+    // TODO: We should probably pass in the buffer to copy the data into.
     std::vector<uint8_t> data(header.size);
     Read(&data[0], header.size);
-    uint16_t common_type = *reinterpret_cast<uint16_t*>(&data[0]);
-
-    LOG("Got event with type: %d\n", common_type);
+    return data;
   }
 
  private:

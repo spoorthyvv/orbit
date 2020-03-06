@@ -126,9 +126,8 @@ int32_t tracepoint_event_open(const char* tracepoint_category,
 }  // namespace LinuxTracing
 
 // Format is based on the content the the event's format file:
-// /sys/kernel/debug/tracing/events/sched/sched_waking/format
-#pragma pack(push, 8) // push current alignment and set alignment to 8
-struct AmdGpuSchedRunJobFormat {
+// /sys/kernel/debug/tracing/events/<category>/<name>/format
+struct __attribute__((__packed__)) AmdGpuSchedRunJobFormat {
   uint16_t common_type;
   uint8_t common_flags;
   uint8_t common_preempt_count;
@@ -141,7 +140,7 @@ struct AmdGpuSchedRunJobFormat {
   uint32_t num_ibs;
 };
 
-struct AmdGpuCsIoctlFormat {
+struct __attribute__((__packed__)) AmdGpuCsIoctlFormat {
   uint16_t common_type;
   uint8_t common_flags;
   uint8_t common_preempt_count;
@@ -156,7 +155,7 @@ struct AmdGpuCsIoctlFormat {
 
 };
 
-struct DmaFenceSignaledFormat {
+struct __attribute__((__packed__)) DmaFenceSignaledFormat {
   uint16_t common_type;
   uint8_t common_flags;
   uint8_t common_preempt_count;
@@ -166,11 +165,13 @@ struct DmaFenceSignaledFormat {
   uint32_t context;
   uint32_t seqno;
 };
-#pragma pack(pop) // restore previous alignment
 
 // TODO: For debugging purposes, remove later.
-void PrintAmdGpuSchedRunJobFormat(AmdGpuSchedRunJobFormat* format);
-void PrintAmdGpuCsIoctlFormat(AmdGpuCsIoctlFormat* format);
-void PrintDmaFenceSignaledFormat(DmaFenceSignaledFormat* format);
+void print_amdgpu_sched_run_job(AmdGpuSchedRunJobFormat* format);
+void print_amdgpu_cs_ioctl(AmdGpuCsIoctlFormat* format);
+void print_dma_fence_signaled(DmaFenceSignaledFormat* format);
+
+int32_t get_tracepoint_id(const char* tracepoint_category,
+                          const char* tracepoint_name);
 
 #endif  // ORBIT_LINUX_TRACING_LINUX_PERF_UTILS_H_
