@@ -119,6 +119,58 @@ int32_t uretprobe_event_open(const char* module, uint64_t function_offset,
 
 int32_t uretprobe_stack_event_open(const char* module, uint64_t function_offset,
                                    pid_t pid, int32_t cpu);
+
+// perf_event_open for tracepoint events.
+int32_t tracepoint_event_open(const char* tracepoint_category,
+                              const char* tracepoint_name, pid_t pid, int32_t cpu);
 }  // namespace LinuxTracing
+
+// Format is based on the content the the event's format file:
+// /sys/kernel/debug/tracing/events/sched/sched_waking/format
+#pragma pack(push, 8) // push current alignment and set alignment to 8
+struct AmdGpuSchedRunJobFormat {
+  uint16_t common_type;
+  uint8_t common_flags;
+  uint8_t common_preempt_count;
+  int32_t common_pid;
+  uint64_t sched_job_id;
+  int32_t timeline;  // needs special handling
+  uint32_t context;
+  uint32_t seqno;
+  uint64_t ring_name; // ???, this is declared as char*
+  uint32_t num_ibs;
+};
+
+struct AmdGpuCsIoctlFormat {
+  uint16_t common_type;
+  uint8_t common_flags;
+  uint8_t common_preempt_count;
+  int32_t common_pid;
+  uint64_t sched_job_id;
+  int32_t timeline;  // needs special handling
+  uint32_t context;
+  uint32_t seqno;
+  uint64_t dma_fence;  // print the pointer address
+  uint64_t ring_name;  // print the pointer address
+  uint32_t num_ibs;
+
+};
+
+struct DmaFenceSignaledFormat {
+  uint16_t common_type;
+  uint8_t common_flags;
+  uint8_t common_preempt_count;
+  int32_t common_pid;
+  int32_t driver;
+  int32_t timeline;
+  uint32_t context;
+  uint32_t seqno;
+};
+#pragma pack(pop) // restore previous alignment
+
+// TODO: For debugging purposes, remove later.
+void PrintAmdGpuSchedRunJobFormat(AmdGpuSchedRunJobFormat* format);
+void PrintAmdGpuCsIoctlFormat(AmdGpuCsIoctlFormat* format);
+void PrintDmaFenceSignaledFormat(DmaFenceSignaledFormat* format);
 
 #endif  // ORBIT_LINUX_TRACING_LINUX_PERF_UTILS_H_

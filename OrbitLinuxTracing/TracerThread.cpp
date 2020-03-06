@@ -7,16 +7,19 @@
 #include "UprobesUnwindingVisitor.h"
 #include "Utils.h"
 #include "absl/container/flat_hash_map.h"
+#include "absl/container/flat_hash_set.h"
 
 namespace LinuxTracing {
 
 // TODO: Refactor this huge method.
 void TracerThread::Run(
     const std::shared_ptr<std::atomic<bool>>& exit_requested) {
+  //LOG("TracerThread::Run");
   absl::flat_hash_map<int32_t, PerfEventRingBuffer> fds_to_ring_buffer;
   absl::flat_hash_map<pid_t, int32_t> threads_to_fd;
   absl::flat_hash_map<int32_t, const Function*> uprobe_fds_to_function;
   absl::flat_hash_map<int32_t, const Function*> uretprobe_fds_to_function;
+  absl::flat_hash_set<int32_t> gpu_tracing_fds;
 
   // perf_event_open refers to cores as "CPUs".
   int32_t num_cpus = GetNumCores();
@@ -68,6 +71,31 @@ void TracerThread::Run(
       fds_to_ring_buffer.emplace(sampling_fd, PerfEventRingBuffer{sampling_fd});
       threads_to_fd.emplace(tid, sampling_fd);
     }
+    bool trace_gpu_scheduling = true;
+    if (trace_gpu_scheduling) {
+      int cs_fd = tracepoint_event_open("amdgpu", "amdgpu_cs_ioctl", tid, -1);
+      //TODO: Proper error handling.
+      assert(cs_fd != -1);
+      fds_to_ring_buffer.emplace(cs_fd, PerfEventRingBuffer{cs_fd});
+      threads_to_fd.emplace(tid, cs_fd);
+      gpu_tracing_fds.emplace(cs_fd);
+
+      int run_job_fd = tracepoint_event_open("amdgpu", "amdgpu_sched_run_job", tid, -1);
+      //TODO: Proper error handling.
+      assert(run_job_fd != -1);
+
+      fds_to_ring_buffer.emplace(run_job_fd, PerfEventRingBuffer{run_job_fd});
+      threads_to_fd.emplace(tid, run_job_fd);
+      gpu_tracing_fds.emplace(run_job_fd);
+
+      int dma_fence_fd = tracepoint_event_open("dma_fence", "dma_fence_signaled", tid, -1);
+      //TODO: Proper error handling.
+      assert(dma_fence_fd != -1);
+
+      fds_to_ring_buffer.emplace(dma_fence_fd, PerfEventRingBuffer{dma_fence_fd});
+      threads_to_fd.emplace(tid, dma_fence_fd);
+      gpu_tracing_fds.emplace(dma_fence_fd);
+    }
   }
 
   // TODO: New threads might spawn here before forks are started to be recorded.
@@ -115,6 +143,7 @@ void TracerThread::Run(
 
       bool is_uprobes = uprobe_fds_to_function.count(fd) > 0;
       bool is_uretprobes = uretprobe_fds_to_function.count(fd) > 0;
+      bool is_gpu_tracing = gpu_tracing_fds.count(fd) > 0;
 
       int32_t read_from_this_buffer = 0;
       // Read up to ROUND_ROBIN_BATCH_SIZE (5) new events.
@@ -245,6 +274,9 @@ void TracerThread::Run(
 
               ++uprobes_count;
 
+            } else if (is_gpu_tracing) {
+              LOG("GPU Tracing event");
+              ring_buffer.ConsumeRecordVariableSize(header);
             } else {
               auto sample =
                   ring_buffer.ConsumeRecord<StackSamplePerfEvent>(header);

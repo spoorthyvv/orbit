@@ -4,7 +4,9 @@
 
 #include <cerrno>
 #include <cstring>
-
+#include <string>
+#include <fstream>
+#include "absl/strings/str_format.h"
 #include "Logging.h"
 
 namespace LinuxTracing {
@@ -124,6 +126,128 @@ int32_t uretprobe_stack_event_open(const char* module, uint64_t function_offset,
   pe.sample_type |= PERF_SAMPLE_STACK_USER | PERF_SAMPLE_REGS_USER;
 
   return generic_event_open(&pe, pid, cpu);
+}
+
+int32_t get_tracepoint_id(const char* tracepoint_category,
+                           const char* tracepoint_name) {
+  std::string filename =
+      absl::StrFormat("/sys/kernel/debug/tracing/events/%s/%s/id",
+                      tracepoint_category, tracepoint_name);
+  LOG("Tracepoint filename: %s\n", filename.c_str());
+  std::ifstream id_file{filename};
+  int32_t tp_id = -1;
+  std::string line;
+  if (!std::getline(id_file, line)) {
+    return -1;
+  }
+  return std::atoi(line.c_str());
+}
+
+int32_t tracepoint_event_open(const char* tracepoint_category, const char* tracepoint_name,
+                              pid_t pid, int32_t cpu) {
+  int tp_id = get_tracepoint_id(tracepoint_category, tracepoint_name);
+  LOG("tracepoint id: %d", tp_id);
+  perf_event_attr pe = {};
+  pe.type = PERF_TYPE_TRACEPOINT;
+  pe.size = sizeof(struct perf_event_attr);
+  pe.config = tp_id;
+  pe.sample_type = PERF_SAMPLE_RAW;
+  pe.disabled = 1;
+  pe.sample_period = 1;
+  pe.use_clockid = 1;
+  pe.clockid = CLOCK_MONOTONIC;
+
+  return generic_event_open(&pe, pid, cpu);
+}
+
+void PrintAmdGpuSchedRunJobFormat(AmdGpuSchedRunJobFormat* format) {
+  // Extract data from data_loc. This field is a 32-bit number that encodes the size
+  // (high 16-bit) and offset (low 16-bit) of a dynamically sized string, in this
+  // case the timeline string ("gfx", "sdma0", etc.) It seems that this string is
+  // null terminated.
+  int32_t data_loc = *reinterpret_cast<int32_t*>(&format->timeline);
+  int16_t data_loc_size = static_cast<int16_t>(data_loc >> 16);
+  int16_t data_loc_offset = static_cast<int16_t>(data_loc & 0x00ff);
+
+  std::vector<char> data_loc_data(data_loc_size);;
+  std::memcpy(&data_loc_data[0], reinterpret_cast<char*>(format) + data_loc_offset, data_loc_size);
+
+  LOG("    common_type: %d\n", format->common_type);
+  LOG("    common_flags: %d\n", format->common_flags);
+  LOG("    common_preempt_count: %d\n", format->common_preempt_count);
+  LOG("    common_pid: %d\n", format->common_pid);
+  LOG("    sched_job_id: %d\n", format->sched_job_id);
+  LOG("    timeline size: %d\n", data_loc_size);
+  LOG("    timeline offset: %d\n", data_loc_offset);
+  LOG("    timeline string: %s\n", &data_loc_data[0]);
+  LOG("    context: %d\n", format->context);
+  LOG("    seqno: %d\n", format->seqno);
+  // The type of this is declared as char* in this event's format file (/sys/kernel/debug/...)
+  // of size 8. Printing this as a hexadecimal value matches the output that 'perf script'
+  // produces.
+  LOG("    ring_name: %llx\n", format->ring_name);
+  LOG("    num_ibs: %d\n", format->num_ibs);
+}
+
+void PrintAmdGpuCsIoctlFormat(AmdGpuCsIoctlFormat* format) {
+  // Extract data from data_loc. This field is a 32-bit number that encodes the size
+  // (high 16-bit) and offset (low 16-bit) of a dynamically sized string, in this
+  // case the timeline string ("gfx", "sdma0", etc.) It seems that this string is
+  // null terminated.
+  int32_t data_loc = *reinterpret_cast<int32_t*>(&format->timeline);
+  int16_t data_loc_size = static_cast<int16_t>(data_loc >> 16);
+  int16_t data_loc_offset = static_cast<int16_t>(data_loc & 0x00ff);
+
+  std::vector<char> data_loc_data(data_loc_size);;
+  std::memcpy(&data_loc_data[0], reinterpret_cast<char*>(format) + data_loc_offset, data_loc_size);
+
+  LOG("    common_type: %d\n", format->common_type);
+  LOG("    common_flags: %d\n", format->common_flags);
+  LOG("    common_preempt_count: %d\n", format->common_preempt_count);
+  LOG("    common_pid: %d\n", format->common_pid);
+  LOG("    sched_job_id: %d\n", format->sched_job_id);
+  LOG("    timeline size: %d\n", data_loc_size);
+  LOG("    timeline offset: %d\n", data_loc_offset);
+  LOG("    timeline string: %s\n", &data_loc_data[0]);
+  LOG("    context: %d\n", format->context);
+  LOG("    seqno: %d\n", format->seqno);
+  // This is a pointer to a dma_fence struct. This does not get printed when running 'perf script'
+  // for this event, so we can probably ignore this. This is 0 in any experiments I've done.
+  LOG("    dma_fence: %llx\n", format->dma_fence);
+  // The type of this is declared as char* in this event's format file (/sys/kernel/debug/...)
+  // of size 8. Printing this as a hexadecimal value matches the output that 'perf script'
+  // produces.
+  LOG("    ring_name: %llx\n", format->ring_name);
+  LOG("    num_ibs: %d\n", format->num_ibs);
+}
+
+void PrintDmaFenceSignaledFormat(DmaFenceSignaledFormat* format) {
+  int32_t driver = *reinterpret_cast<int32_t*>(&format->driver);
+  int16_t driver_size = static_cast<int16_t>(driver >> 16);
+  int16_t driver_offset = static_cast<int16_t>(driver & 0x00ff);
+
+  std::vector<char> driver_data(driver_size);
+  std::memcpy(&driver_data[0], reinterpret_cast<char*>(format) + driver_offset, driver_size);
+
+  // Extract data from data_loc. This field is a 32-bit number that encodes the size
+  // (high 16-bit) and offset (low 16-bit) of a dynamically sized string, in this
+  // case the timeline string ("gfx", "sdma0", etc.) It seems that this string is
+  // null terminated.
+  int32_t timeline = *reinterpret_cast<int32_t*>(&format->timeline);
+  int16_t timeline_size = static_cast<int16_t>(timeline >> 16);
+  int16_t timeline_offset = static_cast<int16_t>(timeline & 0x00ff);
+
+  std::vector<char> timeline_data(timeline_size);
+  std::memcpy(&timeline_data[0], reinterpret_cast<char*>(format) + timeline_offset, timeline_size);
+
+  LOG("    common_type: %d\n", format->common_type);
+  LOG("    common_flags: %d\n", format->common_flags);
+  LOG("    common_preempt_count: %d\n", format->common_preempt_count);
+  LOG("    common_pid: %d\n", format->common_pid);
+  LOG("    driver: %s\n", &driver_data[0]);
+  LOG("    timeline: %s\n", &timeline_data[0]);
+  LOG("    context: %d\n", format->context);
+  LOG("    seqno: %d\n", format->seqno);
 }
 
 }  // namespace LinuxTracing
