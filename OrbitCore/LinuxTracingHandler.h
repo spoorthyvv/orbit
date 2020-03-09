@@ -40,6 +40,7 @@ class LinuxTracingHandler : LinuxTracing::TracerListener {
   void OnFunctionBegin(
       const LinuxTracing::FunctionBegin& function_begin) override;
   void OnFunctionEnd(const LinuxTracing::FunctionEnd& function_end) override;
+  void OnGpuExecutionEvent(const LinuxTracing::GpuExecutionEvent& gpu_event) override;
 
  private:
   CoreApp* core_app_;

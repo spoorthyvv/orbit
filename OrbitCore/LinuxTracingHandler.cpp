@@ -133,3 +133,9 @@ void LinuxTracingHandler::OnFunctionEnd(
     }
   }
 }
+
+void LinuxTracingHandler::OnGpuExecutionEvent(const LinuxTracing::GpuExecutionEvent& gpu_event) {
+  PRINT("GpuExecutionEvent received in listener:\n");
+  PRINT_VAR(gpu_event.sequence_number_);
+  PRINT_VAR(gpu_event.context_);
+}

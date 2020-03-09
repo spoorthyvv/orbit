@@ -5,7 +5,9 @@
 #include "PerfEventProcessor2.h"
 #include "PerfEventRingBuffer.h"
 #include "UprobesUnwindingVisitor.h"
+#include "GpuTracepointEventProcessor.h"
 #include "Utils.h"
+
 #include "absl/container/flat_hash_map.h"
 #include "absl/container/flat_hash_set.h"
 
@@ -18,7 +20,11 @@ void TracerThread::Run(
   absl::flat_hash_map<pid_t, int32_t> threads_to_fd;
   absl::flat_hash_map<int32_t, const Function*> uprobe_fds_to_function;
   absl::flat_hash_map<int32_t, const Function*> uretprobe_fds_to_function;
+
+  // GPU tracepoints
   absl::flat_hash_set<int32_t> gpu_tracing_fds;
+  GpuTracepointEventProcessor gpu_event_processor;
+  gpu_event_processor.SetListener(listener_);
 
   // perf_event_open refers to cores as "CPUs".
   int32_t num_cpus = GetNumCores();
@@ -70,29 +76,39 @@ void TracerThread::Run(
       fds_to_ring_buffer.emplace(sampling_fd, PerfEventRingBuffer{sampling_fd});
       threads_to_fd.emplace(tid, sampling_fd);
     }
-    bool trace_gpu_scheduling = true;
-    if (trace_gpu_scheduling) {
-      int cs_fd = tracepoint_event_open("amdgpu", "amdgpu_cs_ioctl", tid, -1);
+  }
+
+  // Enable events for GPU event tracing. We trace three events that correspond to the
+  // following high level events:
+  // - A GPU job (command buffer submission) is scheduled by the application. This is
+  //   tracked by the event "amdgpu_cs_ioctl".
+  // - A GPU job is scheduled to run on the hardware. This is tracked by the event
+  //   "amdgpu_sched_run_job".
+  // - A GPU job is finished by the hardware. This is tracked by the corresponding
+  //   DMA fence being signaled and is tracked by the event "dma_fence_signaled.
+  // A single job execution thus correponds to three events, one of each type above,
+  // that share the same timeline, context, and seqno.
+  // We have to record events system-wide (per CPU) to ensure we record all relevant
+  // events.
+  bool trace_gpu_scheduling = true;
+  if (trace_gpu_scheduling) {
+    for (int32_t cpu = 0; cpu < num_cpus; ++cpu) {
+      int cs_fd = tracepoint_event_open("amdgpu", "amdgpu_cs_ioctl", -1, cpu);
       //TODO: Proper error handling.
       assert(cs_fd != -1);
       fds_to_ring_buffer.emplace(cs_fd, PerfEventRingBuffer{cs_fd});
-      threads_to_fd.emplace(tid, cs_fd);
       gpu_tracing_fds.emplace(cs_fd);
 
-      int run_job_fd = tracepoint_event_open("amdgpu", "amdgpu_sched_run_job", tid, -1);
+      int run_job_fd = tracepoint_event_open("amdgpu", "amdgpu_sched_run_job", -1, cpu);
       //TODO: Proper error handling.
       assert(run_job_fd != -1);
-
       fds_to_ring_buffer.emplace(run_job_fd, PerfEventRingBuffer{run_job_fd});
-      threads_to_fd.emplace(tid, run_job_fd);
       gpu_tracing_fds.emplace(run_job_fd);
 
-      int dma_fence_fd = tracepoint_event_open("dma_fence", "dma_fence_signaled", tid, -1);
+      int dma_fence_fd = tracepoint_event_open("dma_fence", "dma_fence_signaled", -1, cpu);
       //TODO: Proper error handling.
       assert(dma_fence_fd != -1);
-
       fds_to_ring_buffer.emplace(dma_fence_fd, PerfEventRingBuffer{dma_fence_fd});
-      threads_to_fd.emplace(tid, dma_fence_fd);
       gpu_tracing_fds.emplace(dma_fence_fd);
     }
   }
@@ -275,18 +291,7 @@ void TracerThread::Run(
 
             } else if (is_gpu_tracing) {
               std::vector<uint8_t> data = ring_buffer.ConsumeRecordVariableSize(header);
-              // The samples we get from the ring buffer still contain the perf_event_header.
-              // In addition, the next 4 bytes after the header are the size of the sample.
-              // That is, the raw sample starts at sizeof(perf_event_header) + 4.
-              int offset = sizeof(header);
-              uint32_t size_of_raw_sample =
-                  *reinterpret_cast<uint32_t*>(&data[0] + offset);
-              LOG("Size of raw sample: %d\n", size_of_raw_sample);
-              offset += sizeof(uint32_t);
-              uint16_t common_type = *reinterpret_cast<uint16_t*>(&data[0] + offset);
-              LOG("Got event with common_type: %d\n", common_type);
-              // TODO: Pass this to a tracepoint event processor that will group triplets
-              // of sw scheduling, hw scheduling, and hw job finish.
+              gpu_event_processor.AddTracepointEvent(header, data);
             } else {
               auto sample =
                   ring_buffer.ConsumeRecord<StackSamplePerfEvent>(header);

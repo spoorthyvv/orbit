@@ -15,6 +15,7 @@ class TracerListener {
   virtual void OnCallstack(const Callstack& callstack) = 0;
   virtual void OnFunctionBegin(const FunctionBegin& function_begin) = 0;
   virtual void OnFunctionEnd(const FunctionEnd& function_end) = 0;
+  virtual void OnGpuExecutionEvent(const GpuExecutionEvent& gpu_event) = 0;
 };
 
 }  // namespace LinuxTracing

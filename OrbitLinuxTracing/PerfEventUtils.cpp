@@ -160,17 +160,17 @@ int32_t tracepoint_event_open(const char* tracepoint_category, const char* trace
   return generic_event_open(&pe, pid, cpu);
 }
 
-void PrintAmdGpuSchedRunJobFormat(AmdGpuSchedRunJobFormat* format) {
+void print_amdgpu_sched_run_job(const AmdGpuSchedRunJobFormat* format) {
   // Extract data from data_loc. This field is a 32-bit number that encodes the size
   // (high 16-bit) and offset (low 16-bit) of a dynamically sized string, in this
   // case the timeline string ("gfx", "sdma0", etc.) It seems that this string is
   // null terminated.
-  int32_t data_loc = *reinterpret_cast<int32_t*>(&format->timeline);
+  int32_t data_loc = *reinterpret_cast<const int32_t*>(&format->timeline);
   int16_t data_loc_size = static_cast<int16_t>(data_loc >> 16);
   int16_t data_loc_offset = static_cast<int16_t>(data_loc & 0x00ff);
 
   std::vector<char> data_loc_data(data_loc_size);;
-  std::memcpy(&data_loc_data[0], reinterpret_cast<char*>(format) + data_loc_offset, data_loc_size);
+  std::memcpy(&data_loc_data[0], reinterpret_cast<const char*>(format) + data_loc_offset, data_loc_size);
 
   LOG("    common_type: %d\n", format->common_type);
   LOG("    common_flags: %d\n", format->common_flags);
@@ -189,17 +189,17 @@ void PrintAmdGpuSchedRunJobFormat(AmdGpuSchedRunJobFormat* format) {
   LOG("    num_ibs: %d\n", format->num_ibs);
 }
 
-void PrintAmdGpuCsIoctlFormat(AmdGpuCsIoctlFormat* format) {
+void print_amdgpu_cs_ioctl(const AmdGpuCsIoctlFormat* format) {
   // Extract data from data_loc. This field is a 32-bit number that encodes the size
   // (high 16-bit) and offset (low 16-bit) of a dynamically sized string, in this
   // case the timeline string ("gfx", "sdma0", etc.) It seems that this string is
   // null terminated.
-  int32_t data_loc = *reinterpret_cast<int32_t*>(&format->timeline);
+  int32_t data_loc = *reinterpret_cast<const int32_t*>(&format->timeline);
   int16_t data_loc_size = static_cast<int16_t>(data_loc >> 16);
   int16_t data_loc_offset = static_cast<int16_t>(data_loc & 0x00ff);
 
   std::vector<char> data_loc_data(data_loc_size);;
-  std::memcpy(&data_loc_data[0], reinterpret_cast<char*>(format) + data_loc_offset, data_loc_size);
+  std::memcpy(&data_loc_data[0], reinterpret_cast<const char*>(format) + data_loc_offset, data_loc_size);
 
   LOG("    common_type: %d\n", format->common_type);
   LOG("    common_flags: %d\n", format->common_flags);
@@ -221,24 +221,24 @@ void PrintAmdGpuCsIoctlFormat(AmdGpuCsIoctlFormat* format) {
   LOG("    num_ibs: %d\n", format->num_ibs);
 }
 
-void PrintDmaFenceSignaledFormat(DmaFenceSignaledFormat* format) {
-  int32_t driver = *reinterpret_cast<int32_t*>(&format->driver);
+void print_dma_fence_signaled(const DmaFenceSignaledFormat* format) {
+  int32_t driver = *reinterpret_cast<const int32_t*>(&format->driver);
   int16_t driver_size = static_cast<int16_t>(driver >> 16);
   int16_t driver_offset = static_cast<int16_t>(driver & 0x00ff);
 
   std::vector<char> driver_data(driver_size);
-  std::memcpy(&driver_data[0], reinterpret_cast<char*>(format) + driver_offset, driver_size);
+  std::memcpy(&driver_data[0], reinterpret_cast<const char*>(format) + driver_offset, driver_size);
 
   // Extract data from data_loc. This field is a 32-bit number that encodes the size
   // (high 16-bit) and offset (low 16-bit) of a dynamically sized string, in this
   // case the timeline string ("gfx", "sdma0", etc.) It seems that this string is
   // null terminated.
-  int32_t timeline = *reinterpret_cast<int32_t*>(&format->timeline);
+  int32_t timeline = *reinterpret_cast<const int32_t*>(&format->timeline);
   int16_t timeline_size = static_cast<int16_t>(timeline >> 16);
   int16_t timeline_offset = static_cast<int16_t>(timeline & 0x00ff);
 
   std::vector<char> timeline_data(timeline_size);
-  std::memcpy(&timeline_data[0], reinterpret_cast<char*>(format) + timeline_offset, timeline_size);
+  std::memcpy(&timeline_data[0], reinterpret_cast<const char*>(format) + timeline_offset, timeline_size);
 
   LOG("    common_type: %d\n", format->common_type);
   LOG("    common_flags: %d\n", format->common_flags);

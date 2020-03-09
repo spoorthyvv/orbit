@@ -49,6 +49,9 @@ class PerfEventRingBuffer {
     // TODO: We should probably pass in the buffer to copy the data into.
     std::vector<uint8_t> data(header.size);
     Read(&data[0], header.size);
+
+    SkipRecord(header);
+
     return data;
   }
 

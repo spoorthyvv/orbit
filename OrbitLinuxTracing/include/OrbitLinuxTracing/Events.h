@@ -105,6 +105,30 @@ class FunctionEnd : public FunctionEvent {
       : FunctionEvent(tid, virtual_address, timestamp_ns) {}
 };
 
+class GpuExecutionEvent {
+ public:
+  GpuExecutionEvent(pid_t tid, std::string timeline, uint32_t sequence_number,
+                    uint32_t context,
+                    uint64_t user_scheduled_timestamp_ns,
+                    uint64_t hardware_scheduled_timestamp_ns,
+                    uint64_t hardware_finished_timestamp_ns)
+      : tid_(tid), timeline_(timeline), sequence_number_(sequence_number), context_(context),
+        user_scheduled_timestamp_ns_(user_scheduled_timestamp_ns),
+        hardware_scheduled_timestamp_ns_(hardware_scheduled_timestamp_ns),
+        hardware_finished_timestamp_ns_(hardware_finished_timestamp_ns) {}
+
+  // TODO: Make these private?
+  pid_t tid_;
+
+  std::string timeline_;
+  uint32_t sequence_number_;
+  uint32_t context_;
+
+  uint64_t user_scheduled_timestamp_ns_;
+  uint64_t hardware_scheduled_timestamp_ns_;
+  uint64_t hardware_finished_timestamp_ns_;
+};
+
 }  // namespace LinuxTracing
 
 #endif  // ORBIT_LINUX_TRACING_EVENTS_H_

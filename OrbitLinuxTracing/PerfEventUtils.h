@@ -123,7 +123,6 @@ int32_t uretprobe_stack_event_open(const char* module, uint64_t function_offset,
 // perf_event_open for tracepoint events.
 int32_t tracepoint_event_open(const char* tracepoint_category,
                               const char* tracepoint_name, pid_t pid, int32_t cpu);
-}  // namespace LinuxTracing
 
 // Format is based on the content the the event's format file:
 // /sys/kernel/debug/tracing/events/<category>/<name>/format
@@ -165,13 +164,14 @@ struct __attribute__((__packed__)) DmaFenceSignaledFormat {
   uint32_t context;
   uint32_t seqno;
 };
-
 // TODO: For debugging purposes, remove later.
-void print_amdgpu_sched_run_job(AmdGpuSchedRunJobFormat* format);
-void print_amdgpu_cs_ioctl(AmdGpuCsIoctlFormat* format);
-void print_dma_fence_signaled(DmaFenceSignaledFormat* format);
+void print_amdgpu_sched_run_job(const AmdGpuSchedRunJobFormat* format);
+void print_amdgpu_cs_ioctl(const AmdGpuCsIoctlFormat* format);
+void print_dma_fence_signaled(const DmaFenceSignaledFormat* format);
 
 int32_t get_tracepoint_id(const char* tracepoint_category,
                           const char* tracepoint_name);
+
+}  // namespace LinuxTracing
 
 #endif  // ORBIT_LINUX_TRACING_LINUX_PERF_UTILS_H_
