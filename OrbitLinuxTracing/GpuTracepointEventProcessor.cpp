@@ -6,7 +6,6 @@
 #include "PerfEventUtils.h"
 #include "absl/container/flat_hash_map.h"
 
-
 namespace LinuxTracing {
 
 GpuTracepointEventProcessor::GpuTracepointEventProcessor() {
@@ -69,7 +68,6 @@ void GpuTracepointEventProcessor::AddTracepointEvent(const perf_event_header& he
     auto hw_finished_it = hw_finished_events_.find(key);
 
     if (user_it != user_scheduling_events_.end() && hw_finished_it != hw_finished_events_.end()) {
-      // TODO: Need timestamps!
       GpuExecutionEvent gpu_event(format->common_pid, "gfx", seqno, context,
                                   user_it->second.sample_id.time, timestamp_ns, hw_finished_it->second.sample_id.time);
       listener_->OnGpuExecutionEvent(gpu_event);
@@ -93,7 +91,6 @@ void GpuTracepointEventProcessor::AddTracepointEvent(const perf_event_header& he
     auto hw_it = hw_scheduling_events_.find(key);
 
     if (user_it != user_scheduling_events_.end() && hw_it != hw_scheduling_events_.end()) {
-      // TODO: Need timestamps!
       GpuExecutionEvent gpu_event(format->common_pid, "gfx", seqno, context,
                                   user_it->second.sample_id.time, hw_it->second.sample_id.time, timestamp_ns);
       listener_->OnGpuExecutionEvent(gpu_event);
