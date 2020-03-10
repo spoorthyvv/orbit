@@ -321,6 +321,10 @@ void OrbitApp::ProcessContextSwitch(const ContextSwitch& a_ContextSwitch) {
   GTimerManager->Add(a_ContextSwitch);
 }
 
+void OrbitApp::ProcessGpuExecution() {
+  PRINT("ProcessGpuExecution");
+}
+
 //-----------------------------------------------------------------------------
 void OrbitApp::AddSymbol(uint64_t a_Address, const std::string& a_Module,
                          const std::string& a_Name) {

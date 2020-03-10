@@ -142,4 +142,5 @@ void LinuxTracingHandler::OnGpuExecutionEvent(const LinuxTracing::GpuExecutionEv
   PRINT_VAR(gpu_event.user_scheduled_timestamp_ns_);
   PRINT_VAR(gpu_event.hardware_scheduled_timestamp_ns_);
   PRINT_VAR(gpu_event.hardware_finished_timestamp_ns_);
+  core_app_->ProcessGpuExecution();
 }

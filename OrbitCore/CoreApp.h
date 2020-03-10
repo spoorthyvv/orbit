@@ -41,6 +41,7 @@ class CoreApp {
   }
   virtual void ProcessCallStack(CallStack& /*a_CallStack*/) {}
   virtual void ProcessContextSwitch(const ContextSwitch& /*a_ContextSwitch*/) {}
+  virtual void ProcessGpuExecution() {}
   virtual void AddSymbol(uint64_t /*a_Address*/,
                          const std::string& /*a_Module*/,
                          const std::string& /*a_Name*/) {}
