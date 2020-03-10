@@ -56,6 +56,7 @@ class TracerThread {
   bool trace_context_switches_ = true;
   bool trace_callstacks_ = true;
   bool trace_instrumented_functions_ = true;
+  bool trace_gpu_scheduling_ = true;
 };
 
 }  // namespace LinuxTracing

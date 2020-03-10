@@ -41,7 +41,8 @@ target_sources(OrbitLinuxTracing PRIVATE
         UprobesUnwindingVisitor.cpp
         UprobesUnwindingVisitor.h
         Utils.h
-	GpuTracepointEventProcessor.h)
+	GpuTracepointEventProcessor.h
+	GpuTracepointEventProcessor.cpp)
 
 target_link_libraries(OrbitLinuxTracing PUBLIC
         abseil::abseil

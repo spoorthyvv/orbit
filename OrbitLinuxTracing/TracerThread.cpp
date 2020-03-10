@@ -90,8 +90,7 @@ void TracerThread::Run(
   // that share the same timeline, context, and seqno.
   // We have to record events system-wide (per CPU) to ensure we record all relevant
   // events.
-  bool trace_gpu_scheduling = true;
-  if (trace_gpu_scheduling) {
+  if (trace_gpu_scheduling_) {
     for (int32_t cpu = 0; cpu < num_cpus; ++cpu) {
       int cs_fd = tracepoint_event_open("amdgpu", "amdgpu_cs_ioctl", -1, cpu);
       //TODO: Proper error handling.

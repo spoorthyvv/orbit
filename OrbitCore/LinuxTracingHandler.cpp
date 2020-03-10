@@ -136,6 +136,10 @@ void LinuxTracingHandler::OnFunctionEnd(
 
 void LinuxTracingHandler::OnGpuExecutionEvent(const LinuxTracing::GpuExecutionEvent& gpu_event) {
   PRINT("GpuExecutionEvent received in listener:\n");
+  PRINT_VAR(gpu_event.timeline_);
   PRINT_VAR(gpu_event.sequence_number_);
   PRINT_VAR(gpu_event.context_);
+  PRINT_VAR(gpu_event.user_scheduled_timestamp_ns_);
+  PRINT_VAR(gpu_event.hardware_scheduled_timestamp_ns_);
+  PRINT_VAR(gpu_event.hardware_finished_timestamp_ns_);
 }

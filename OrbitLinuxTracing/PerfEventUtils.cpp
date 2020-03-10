@@ -151,7 +151,8 @@ int32_t tracepoint_event_open(const char* tracepoint_category, const char* trace
   pe.type = PERF_TYPE_TRACEPOINT;
   pe.size = sizeof(struct perf_event_attr);
   pe.config = tp_id;
-  pe.sample_type = PERF_SAMPLE_RAW;
+  pe.sample_type = PERF_SAMPLE_TID | PERF_SAMPLE_TIME | PERF_SAMPLE_CPU | PERF_SAMPLE_RAW;
+  pe.sample_id_all = 1;  // also include timestamps for lost events
   pe.disabled = 1;
   pe.sample_period = 1;
   pe.use_clockid = 1;

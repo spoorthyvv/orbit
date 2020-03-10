@@ -47,12 +47,12 @@ class PerfEventRingBuffer {
 
   std::vector<uint8_t> ConsumeRecordVariableSize(const perf_event_header& header) {
     // TODO: We should probably pass in the buffer to copy the data into.
-    std::vector<uint8_t> data(header.size);
-    Read(&data[0], header.size);
+    std::vector<uint8_t> record(header.size);
+    Read(&record[0], header.size);
 
     SkipRecord(header);
 
-    return data;
+    return record;
   }
 
  private:
