@@ -51,11 +51,26 @@ void GpuTracepointEventProcessor::HandleUserSchedulingEvent(const perf_sample_id
   auto hw_it = hw_scheduling_events_.find(key);
 
   if (hw_finished_it != hw_finished_events_.end() && hw_it != hw_scheduling_events_.end()) {
+    if (timeline_to_latest_hw_finish_.count(timeline) == 0) {
+      timeline_to_latest_hw_finish_.emplace(timeline, hw_it->second.sample_id.time);
+    }
+    auto it = timeline_to_latest_hw_finish_.find(timeline);
+    uint64_t hw_start_time = hw_it->second.sample_id.time;
+    if (hw_start_time < it->second) {
+      hw_start_time = it->second;
+    }
+
+
     int depth = ComputeDepthForEvent(timeline, timestamp_ns, hw_finished_it->second.sample_id.time);
     GpuExecutionEvent gpu_event(format->common_pid, timeline,
                                 seqno, context, depth,
-                                timestamp_ns, hw_it->second.sample_id.time, hw_finished_it->second.sample_id.time);
+                                timestamp_ns,
+                                hw_it->second.sample_id.time,
+                                hw_start_time,
+                                hw_finished_it->second.sample_id.time);
     listener_->OnGpuExecutionEvent(gpu_event);
+
+    it->second = hw_finished_it->second.sample_id.time;
 
     hw_finished_events_.erase(key);
     hw_scheduling_events_.erase(key);
@@ -79,11 +94,25 @@ void GpuTracepointEventProcessor::HandleHardwareSchedulingEvent(const perf_sampl
   auto hw_finished_it = hw_finished_events_.find(key);
 
   if (user_it != user_scheduling_events_.end() && hw_finished_it != hw_finished_events_.end()) {
+    if (timeline_to_latest_hw_finish_.count(timeline) == 0) {
+      timeline_to_latest_hw_finish_.emplace(timeline, timestamp_ns);
+    }
+    auto it = timeline_to_latest_hw_finish_.find(timeline);
+    uint64_t hw_start_time = timestamp_ns;
+    if (hw_start_time < it->second) {
+      hw_start_time = it->second;
+    }
+
     int depth = ComputeDepthForEvent(timeline, user_it->second.sample_id.time, hw_finished_it->second.sample_id.time);
     GpuExecutionEvent gpu_event(format->common_pid, timeline,
                                 seqno, context, depth,
-                                user_it->second.sample_id.time, timestamp_ns, hw_finished_it->second.sample_id.time);
+                                user_it->second.sample_id.time,
+                                timestamp_ns,
+                                hw_start_time,
+                                hw_finished_it->second.sample_id.time);
     listener_->OnGpuExecutionEvent(gpu_event);
+
+    it->second = hw_finished_it->second.sample_id.time;
 
     user_scheduling_events_.erase(key);
     hw_finished_events_.erase(key);
@@ -106,12 +135,25 @@ void GpuTracepointEventProcessor::HandleHardwareFinishedEvent(const perf_sample_
   auto hw_it = hw_scheduling_events_.find(key);
 
   if (user_it != user_scheduling_events_.end() && hw_it != hw_scheduling_events_.end()) {
+    if (timeline_to_latest_hw_finish_.count(timeline) == 0) {
+      timeline_to_latest_hw_finish_.emplace(timeline, hw_it->second.sample_id.time);
+    }
+    auto it = timeline_to_latest_hw_finish_.find(timeline);
+    uint64_t hw_start_time = hw_it->second.sample_id.time;
+    if (hw_start_time < it->second) {
+      hw_start_time = it->second;
+    }
+
     int depth = ComputeDepthForEvent(timeline, user_it->second.sample_id.time, timestamp_ns);
     GpuExecutionEvent gpu_event(format->common_pid, timeline,
                                 seqno, context, depth,
-                                user_it->second.sample_id.time, hw_it->second.sample_id.time, timestamp_ns);
+                                user_it->second.sample_id.time,
+                                hw_it->second.sample_id.time,
+                                hw_start_time,
+                                timestamp_ns);
     listener_->OnGpuExecutionEvent(gpu_event);
 
+    it->second = timestamp_ns;
     user_scheduling_events_.erase(key);
     hw_scheduling_events_.erase(key);
   } else {

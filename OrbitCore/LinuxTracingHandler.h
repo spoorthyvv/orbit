@@ -51,6 +51,7 @@ class LinuxTracingHandler : LinuxTracing::TracerListener {
   std::unique_ptr<LinuxTracing::Tracer> tracer_;
   absl::flat_hash_map<pid_t, std::stack<Timer, std::vector<Timer>>>
       tid_timer_stacks_{};
+
   pid_t TimelineToThreadId(std::string timeline);
   absl::flat_hash_map<std::string, pid_t> timeline_to_thread_id_;
   pid_t current_timeline_thread_id = 100000;

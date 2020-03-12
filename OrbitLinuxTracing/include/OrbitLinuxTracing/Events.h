@@ -111,11 +111,13 @@ class GpuExecutionEvent {
                     uint32_t context, int32_t depth,
                     uint64_t user_scheduled_timestamp_ns,
                     uint64_t hardware_scheduled_timestamp_ns,
+                    uint64_t hardware_started_timestamp_ns,
                     uint64_t hardware_finished_timestamp_ns)
       : tid_(tid), timeline_(timeline), sequence_number_(sequence_number), context_(context),
         depth_(depth),
         user_scheduled_timestamp_ns_(user_scheduled_timestamp_ns),
         hardware_scheduled_timestamp_ns_(hardware_scheduled_timestamp_ns),
+        hardware_started_timestamp_ns_(hardware_started_timestamp_ns),
         hardware_finished_timestamp_ns_(hardware_finished_timestamp_ns) {}
 
   // TODO: Make these private?
@@ -128,6 +130,7 @@ class GpuExecutionEvent {
 
   uint64_t user_scheduled_timestamp_ns_;
   uint64_t hardware_scheduled_timestamp_ns_;
+  uint64_t hardware_started_timestamp_ns_;
   uint64_t hardware_finished_timestamp_ns_;
 };
 
