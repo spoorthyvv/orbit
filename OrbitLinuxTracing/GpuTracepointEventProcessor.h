@@ -20,6 +20,13 @@ class GpuTracepointEventProcessor {
   void SetListener(TracerListener* listener);
 
  private:
+  void HandleUserSchedulingEvent(const perf_sample_id& sample_id,
+                                 const AmdGpuCsIoctlFormat* data, uint64_t timestamp_ns);
+  void HandleHardwareSchedulingEvent(const perf_sample_id& sample_id,
+                                     const AmdGpuSchedRunJobFormat* data, uint64_t timestamp_ns);
+  void HandleHardwareFinishedEvent(const perf_sample_id& sample_id,
+                                   const DmaFenceSignaledFormat* data, uint64_t timestamp_ns);
+
   int32_t amdgpu_cs_ioctl_common_type = -1;
   int32_t amdgpu_sched_run_job_common_type = -1;
   int32_t dma_fence_signaled_common_type = -1;
