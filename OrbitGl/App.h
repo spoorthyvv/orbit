@@ -79,7 +79,6 @@ class OrbitApp : public CoreApp {
   void ProcessHashedSamplingCallStack(CallstackEvent& a_CallStack) override;
   void ProcessCallStack(CallStack& a_CallStack) override;
   void ProcessContextSwitch(const ContextSwitch& a_ContextSwitch) override;
-  void ProcessGpuExecution() override;
   void AddSymbol(uint64_t a_Address, const std::string& a_Module,
                  const std::string& a_Name) override;
   void ProcessBufferedCaptureData();

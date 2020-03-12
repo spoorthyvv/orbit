@@ -135,12 +135,17 @@ void LinuxTracingHandler::OnFunctionEnd(
 }
 
 void LinuxTracingHandler::OnGpuExecutionEvent(const LinuxTracing::GpuExecutionEvent& gpu_event) {
-  PRINT("GpuExecutionEvent received in listener:\n");
-  PRINT_VAR(gpu_event.timeline_);
-  PRINT_VAR(gpu_event.sequence_number_);
-  PRINT_VAR(gpu_event.context_);
-  PRINT_VAR(gpu_event.user_scheduled_timestamp_ns_);
-  PRINT_VAR(gpu_event.hardware_scheduled_timestamp_ns_);
-  PRINT_VAR(gpu_event.hardware_finished_timestamp_ns_);
-  core_app_->ProcessGpuExecution();
+  Timer timer_user_to_sched;
+  timer_user_to_sched.m_TID = 99999;  // TODO: This is a hack to quickly be able to show a GPU timeline.
+  timer_user_to_sched.m_Start = gpu_event.user_scheduled_timestamp_ns_;
+  timer_user_to_sched.m_End = gpu_event.hardware_scheduled_timestamp_ns_;
+  timer_user_to_sched.m_Depth = 0;  // TODO
+  core_app_->ProcessTimer(timer_user_to_sched, "gfx");
+
+  Timer timer_sched_to_finish;
+  timer_sched_to_finish.m_TID = 99999;
+  timer_sched_to_finish.m_Start = gpu_event.hardware_scheduled_timestamp_ns_;
+  timer_sched_to_finish.m_End = gpu_event.hardware_finished_timestamp_ns_;
+  timer_sched_to_finish.m_Depth = 0;
+  core_app_->ProcessTimer(timer_sched_to_finish, "gfx");
 }
