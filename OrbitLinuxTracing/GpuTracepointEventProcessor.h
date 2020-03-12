@@ -52,8 +52,8 @@ class GpuTracepointEventProcessor {
   absl::flat_hash_map<Key, HwScheduleEvent> hw_scheduling_events_;
   absl::flat_hash_map<Key, HwFinishEvent> hw_finished_events_;
 
-  std::vector<uint64_t> latest_timestamp_for_depth_;
-  int ComputeDepthForEvent(uint64_t start_timestamp, uint64_t end_timestamp);
+  absl::flat_hash_map<std::string, std::vector<uint64_t>> timeline_to_latest_timestamp_per_depth_;
+  int ComputeDepthForEvent(const std::string& timeline, uint64_t start_timestamp, uint64_t end_timestamp);
 
   // TODO: Fix this.
   template<typename T> std::string ExtractTimelineString(const T* format) {

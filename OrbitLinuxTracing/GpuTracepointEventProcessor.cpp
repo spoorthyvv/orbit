@@ -20,15 +20,23 @@ GpuTracepointEventProcessor::GpuTracepointEventProcessor() {
   assert(dma_fence_signaled_common_type != -1);
 }
 
-int GpuTracepointEventProcessor::ComputeDepthForEvent(uint64_t start_timestamp, uint64_t end_timestamp) {
-  for (int d = 0; d < latest_timestamp_for_depth_.size(); ++d) {
-    if (start_timestamp >= latest_timestamp_for_depth_[d]) {
-      latest_timestamp_for_depth_[d] = end_timestamp;
+int GpuTracepointEventProcessor::ComputeDepthForEvent(const std::string& timeline,
+                                                      uint64_t start_timestamp, uint64_t end_timestamp) {
+  if (timeline_to_latest_timestamp_per_depth_.count(timeline) == 0) {
+    std::vector<uint64_t> vec;
+    timeline_to_latest_timestamp_per_depth_.emplace(timeline, vec);
+  }
+  auto it = timeline_to_latest_timestamp_per_depth_.find(timeline);
+  std::vector<uint64_t>& vec = it->second;
+
+  for (int d = 0; d < vec.size(); ++d) {
+    if (start_timestamp >= vec[d]) {
+      vec[d] = end_timestamp;
       return d;
     }
   }
-  latest_timestamp_for_depth_.push_back(end_timestamp);
-  return static_cast<int>(latest_timestamp_for_depth_.size());
+  vec.push_back(end_timestamp);
+  return static_cast<int>(vec.size());
 }
 
 void GpuTracepointEventProcessor::HandleUserSchedulingEvent(const perf_sample_id& sample_id,
@@ -37,13 +45,14 @@ void GpuTracepointEventProcessor::HandleUserSchedulingEvent(const perf_sample_id
   uint32_t context = format->context;
   uint32_t seqno = format->seqno;
 
-  Key key = std::make_tuple(context, seqno, timeline_string);
+  std::string timeline = ExtractTimelineString<AmdGpuCsIoctlFormat>(format);
+  Key key = std::make_tuple(context, seqno, timeline);
   auto hw_finished_it = hw_finished_events_.find(key);
   auto hw_it = hw_scheduling_events_.find(key);
 
   if (hw_finished_it != hw_finished_events_.end() && hw_it != hw_scheduling_events_.end()) {
-    int depth = ComputeDepthForEvent(timestamp_ns, hw_finished_it->second.sample_id.time);
-    GpuExecutionEvent gpu_event(format->common_pid, ExtractTimelineString<AmdGpuCsIoctlFormat>(format),
+    int depth = ComputeDepthForEvent(timeline, timestamp_ns, hw_finished_it->second.sample_id.time);
+    GpuExecutionEvent gpu_event(format->common_pid, timeline,
                                 seqno, context, depth,
                                 timestamp_ns, hw_it->second.sample_id.time, hw_finished_it->second.sample_id.time);
     listener_->OnGpuExecutionEvent(gpu_event);
@@ -63,13 +72,15 @@ void GpuTracepointEventProcessor::HandleHardwareSchedulingEvent(const perf_sampl
                                                                 uint64_t timestamp_ns) {
   uint32_t context = format->context;
   uint32_t seqno = format->seqno;
-  Key key = std::make_tuple(context, seqno, timeline_string);
+
+  std::string timeline = ExtractTimelineString<AmdGpuSchedRunJobFormat>(format);
+  Key key = std::make_tuple(context, seqno, timeline);
   auto user_it = user_scheduling_events_.find(key);
   auto hw_finished_it = hw_finished_events_.find(key);
 
   if (user_it != user_scheduling_events_.end() && hw_finished_it != hw_finished_events_.end()) {
-    int depth = ComputeDepthForEvent(user_it->second.sample_id.time, hw_finished_it->second.sample_id.time);
-    GpuExecutionEvent gpu_event(format->common_pid, ExtractTimelineString<AmdGpuSchedRunJobFormat>(format),
+    int depth = ComputeDepthForEvent(timeline, user_it->second.sample_id.time, hw_finished_it->second.sample_id.time);
+    GpuExecutionEvent gpu_event(format->common_pid, timeline,
                                 seqno, context, depth,
                                 user_it->second.sample_id.time, timestamp_ns, hw_finished_it->second.sample_id.time);
     listener_->OnGpuExecutionEvent(gpu_event);
@@ -88,14 +99,15 @@ void GpuTracepointEventProcessor::HandleHardwareFinishedEvent(const perf_sample_
                                                               uint64_t timestamp_ns) {
   uint32_t context = format->context;
   uint32_t seqno = format->seqno;
-  Key key = std::make_tuple(context, seqno, timeline_string);
 
+  std::string timeline = ExtractTimelineString<DmaFenceSignaledFormat>(format);
+  Key key = std::make_tuple(context, seqno, timeline);
   auto user_it = user_scheduling_events_.find(key);
   auto hw_it = hw_scheduling_events_.find(key);
 
   if (user_it != user_scheduling_events_.end() && hw_it != hw_scheduling_events_.end()) {
-    int depth = ComputeDepthForEvent(user_it->second.sample_id.time, timestamp_ns);
-    GpuExecutionEvent gpu_event(format->common_pid, ExtractTimelineString<DmaFenceSignaledFormat>(format),
+    int depth = ComputeDepthForEvent(timeline, user_it->second.sample_id.time, timestamp_ns);
+    GpuExecutionEvent gpu_event(format->common_pid, timeline,
                                 seqno, context, depth,
                                 user_it->second.sample_id.time, hw_it->second.sample_id.time, timestamp_ns);
     listener_->OnGpuExecutionEvent(gpu_event);
