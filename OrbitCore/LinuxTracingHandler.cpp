@@ -151,20 +151,20 @@ void LinuxTracingHandler::OnGpuExecutionEvent(const LinuxTracing::GpuExecutionEv
   timer_user_to_sched.m_TID = TimelineToThreadId(gpu_event.timeline_);
   timer_user_to_sched.m_Start = gpu_event.user_scheduled_timestamp_ns_;
   timer_user_to_sched.m_End = gpu_event.hardware_scheduled_timestamp_ns_;
-  timer_user_to_sched.m_Depth = 3 * gpu_event.depth_;
+  timer_user_to_sched.m_Depth = gpu_event.depth_;
   core_app_->ProcessTimer(timer_user_to_sched, gpu_event.timeline_);
 
   Timer timer_sched_to_start;
   timer_sched_to_start.m_TID = TimelineToThreadId(gpu_event.timeline_);
   timer_sched_to_start.m_Start = gpu_event.hardware_scheduled_timestamp_ns_;
   timer_sched_to_start.m_End = gpu_event.hardware_started_timestamp_ns_;
-  timer_sched_to_start.m_Depth = 3 * gpu_event.depth_ + 1;
+  timer_sched_to_start.m_Depth = gpu_event.depth_;
   core_app_->ProcessTimer(timer_sched_to_start, gpu_event.timeline_);
 
   Timer timer_start_to_finish;
   timer_start_to_finish.m_TID = TimelineToThreadId(gpu_event.timeline_);
   timer_start_to_finish.m_Start = gpu_event.hardware_started_timestamp_ns_;
   timer_start_to_finish.m_End = gpu_event.hardware_finished_timestamp_ns_;
-  timer_start_to_finish.m_Depth = 3 * gpu_event.depth_ + 2;
+  timer_start_to_finish.m_Depth = gpu_event.depth_;
   core_app_->ProcessTimer(timer_start_to_finish, gpu_event.timeline_);
 }
