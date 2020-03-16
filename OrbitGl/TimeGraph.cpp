@@ -540,6 +540,22 @@ void TimeGraph::UpdatePrimitives(bool a_Picking) {
           Color grey(g, g, g, 255);
           static Color selectionColor(0, 128, 255, 255);
           Color col = GetThreadColor(timer.m_TID);
+
+          if (timer.m_Type == Timer::GPU_ACTIVITY) {
+            float coeff = 1.0f;
+            std::string gpu_stage = timer.EncodedString();
+            if (gpu_stage == "sw queue") {
+              coeff = 0.5f;
+            } else if (gpu_stage == "hw queue") {
+              coeff = 0.75f;
+            } else if (gpu_stage == "hw execution") {
+              coeff = 1.0f;
+            }
+            col[0] = coeff * col[0];
+            col[1] = coeff * col[1];
+            col[2] = coeff * col[2];
+          }
+
           col = isSelected
                     ? selectionColor
                     : isSameThreadIdAsSelected ? col : isInactive ? grey : col;
@@ -567,10 +583,8 @@ void TimeGraph::UpdatePrimitives(bool a_Picking) {
                               (unsigned char)dark[2], (unsigned char)col[3]);
             colors[0] = colors[1];
             m_Batcher.AddBox(box, colors, PickingID::BOX, &textBox);
-
             // TODO: Plumb info that this is a Gpu event.
-            bool isGpuEvent = true;
-            if (isGpuEvent) {
+            if (timer.m_Type == Timer::GPU_ACTIVITY) {
               Line line;
               line.m_Beg = Vec3(pos[0], pos[1], z);
               line.m_End = Vec3(pos[0], pos[1] + size[1], z);
@@ -579,6 +593,12 @@ void TimeGraph::UpdatePrimitives(bool a_Picking) {
               colors[1] = Color((unsigned char)255, (unsigned char)255,
                                 (unsigned char)255, (unsigned char)255);
               colors[0] = colors[1];
+              double elapsedMillis = ((double)elapsed) * 0.001;
+              std::string time = GetPrettyTime(elapsedMillis);
+
+              std::string text = absl::StrFormat(
+                  "%s %s", timer.EncodedString(), time.c_str());
+              textBox.SetText(text);
               m_Batcher.AddLine(line, colors, PickingID::LINE, &textBox);
 
               line.m_Beg = Vec3(pos[0] + size[0], pos[1], z);
