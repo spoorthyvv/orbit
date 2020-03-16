@@ -582,30 +582,16 @@ void TimeGraph::UpdatePrimitives(bool a_Picking) {
             colors[1] = Color((unsigned char)dark[0], (unsigned char)dark[1],
                               (unsigned char)dark[2], (unsigned char)col[3]);
             colors[0] = colors[1];
-            m_Batcher.AddBox(box, colors, PickingID::BOX, &textBox);
-            // TODO: Plumb info that this is a Gpu event.
+
             if (timer.m_Type == Timer::GPU_ACTIVITY) {
-              Line line;
-              line.m_Beg = Vec3(pos[0], pos[1], z);
-              line.m_End = Vec3(pos[0], pos[1] + size[1], z);
-              Color colors[2];
-              Fill(colors, col);
-              colors[1] = Color((unsigned char)255, (unsigned char)255,
-                                (unsigned char)255, (unsigned char)255);
-              colors[0] = colors[1];
               double elapsedMillis = ((double)elapsed) * 0.001;
               std::string time = GetPrettyTime(elapsedMillis);
-
               std::string text = absl::StrFormat(
                   "%s %s", timer.EncodedString(), time.c_str());
               textBox.SetText(text);
-              m_Batcher.AddLine(line, colors, PickingID::LINE, &textBox);
-
-              line.m_Beg = Vec3(pos[0] + size[0], pos[1], z);
-              line.m_End = Vec3(pos[0] + size[0], pos[1] + size[1], z);
-              m_Batcher.AddLine(line, colors, PickingID::LINE, &textBox);
-
             }
+
+            m_Batcher.AddBox(box, colors, PickingID::BOX, &textBox);
 
             if (!isContextSwitch && textBox.GetText().size() == 0) {
               double elapsedMillis = ((double)elapsed) * 0.001;
