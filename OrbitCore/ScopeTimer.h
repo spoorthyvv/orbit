@@ -56,6 +56,7 @@ class Timer {
     NONE,
     CORE_ACTIVITY,
     THREAD_ACTIVITY,
+    GPU_ACTIVITY,
     HIGHLIGHT,
     UNREAL_OBJECT,
     ZONE,
