@@ -152,7 +152,16 @@ void LinuxTracingHandler::OnGpuExecutionEvent(const LinuxTracing::GpuExecutionEv
   timer_user_to_sched.m_Start = gpu_event.user_scheduled_timestamp_ns_;
   timer_user_to_sched.m_End = gpu_event.hardware_scheduled_timestamp_ns_;
   timer_user_to_sched.m_Depth = gpu_event.depth_;
-  timer_user_to_sched.EncodeString("sw queue");
+
+  const std::string sw_queue("sw queue");
+  uint64_t hash = StringHash(sw_queue);
+  core_app_->AddKeyAndString(hash, sw_queue);
+  timer_user_to_sched.m_UserData[0] = hash;
+
+  uint64_t timeline_hash = StringHash(gpu_event.timeline_);
+  core_app_->AddKeyAndString(timeline_hash, gpu_event.timeline_);
+  timer_user_to_sched.m_UserData[1] = timeline_hash;
+
   timer_user_to_sched.m_Type = Timer::GPU_ACTIVITY;
   core_app_->ProcessTimer(timer_user_to_sched, gpu_event.timeline_);
 
@@ -161,7 +170,14 @@ void LinuxTracingHandler::OnGpuExecutionEvent(const LinuxTracing::GpuExecutionEv
   timer_sched_to_start.m_Start = gpu_event.hardware_scheduled_timestamp_ns_;
   timer_sched_to_start.m_End = gpu_event.hardware_started_timestamp_ns_;
   timer_sched_to_start.m_Depth = gpu_event.depth_;
-  timer_sched_to_start.EncodeString("hw queue");
+
+  const std::string hw_queue("hw queue");
+  hash = StringHash(hw_queue);
+  core_app_->AddKeyAndString(hash, hw_queue);
+
+  timer_sched_to_start.m_UserData[0] = hash;
+  timer_sched_to_start.m_UserData[1] = timeline_hash;
+
   timer_sched_to_start.m_Type = Timer::GPU_ACTIVITY;
   core_app_->ProcessTimer(timer_sched_to_start, gpu_event.timeline_);
 
@@ -170,7 +186,13 @@ void LinuxTracingHandler::OnGpuExecutionEvent(const LinuxTracing::GpuExecutionEv
   timer_start_to_finish.m_Start = gpu_event.hardware_started_timestamp_ns_;
   timer_start_to_finish.m_End = gpu_event.hardware_finished_timestamp_ns_;
   timer_start_to_finish.m_Depth = gpu_event.depth_;
-  timer_start_to_finish.EncodeString("hw execution");
+
+  const std::string hw_execution("hw execution");
+  hash = StringHash(hw_execution);
+  core_app_->AddKeyAndString(hash, hw_execution);
+  timer_sched_to_start.m_UserData[0] = hash;
+  timer_sched_to_start.m_UserData[1] = timeline_hash;
+
   timer_start_to_finish.m_Type = Timer::GPU_ACTIVITY;
   core_app_->ProcessTimer(timer_start_to_finish, gpu_event.timeline_);
 }

@@ -346,6 +346,7 @@ void OrbitApp::AddKeyAndString(uint64_t key, const std::string& str) {
     KeyAndString key_and_string;
     key_and_string.key = key;
     key_and_string.str = str;
+    PRINT("key and str remote: %lu, %s\n", key, str.c_str());
     if (GStringManager->Exists(key)) {
       std::string message_data = SerializeObjectBinary(key_and_string);
       GTcpServer->Send(Msg_KeyAndString, (void*)message_data.c_str(),
@@ -357,6 +358,7 @@ void OrbitApp::AddKeyAndString(uint64_t key, const std::string& str) {
   key_and_string->key = key;
   key_and_string->str = str;
   GStringManager->Add(key, str);
+  PRINT("key and str remote: %lu, %s\n", key, str.c_str());
 }
 
 

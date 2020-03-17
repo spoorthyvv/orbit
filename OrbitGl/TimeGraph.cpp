@@ -544,7 +544,7 @@ void TimeGraph::UpdatePrimitives(bool a_Picking) {
 
           if (timer.m_Type == Timer::GPU_ACTIVITY) {
             float coeff = 1.0f;
-            std::string gpu_stage = timer.EncodedString();
+            std::string gpu_stage = GStringManager->Get(timer.m_UserData[0]);
             if (gpu_stage == "sw queue") {
               coeff = 0.5f;
             } else if (gpu_stage == "hw queue") {
@@ -552,6 +552,7 @@ void TimeGraph::UpdatePrimitives(bool a_Picking) {
             } else if (gpu_stage == "hw execution") {
               coeff = 1.0f;
             }
+
             col[0] = coeff * col[0];
             col[1] = coeff * col[1];
             col[2] = coeff * col[2];
@@ -587,8 +588,8 @@ void TimeGraph::UpdatePrimitives(bool a_Picking) {
             if (timer.m_Type == Timer::GPU_ACTIVITY) {
               double elapsedMillis = ((double)elapsed) * 0.001;
               std::string time = GetPrettyTime(elapsedMillis);
-              std::string text = absl::StrFormat(
-                  "%s %s", timer.EncodedString(), time.c_str());
+              std::string gpu_stage = GStringManager->Get(timer.m_UserData[0]);
+              std::string text = absl::StrFormat("%s %s", gpu_stage.c_str(), time.c_str());
               textBox.SetText(text);
             }
 
