@@ -32,6 +32,7 @@
 #include "ImGuiOrbit.h"
 #endif
 #include "Injection.h"
+#include "KeyAndString.h"
 #include "LinuxCallstackEvent.h"
 #include "LiveFunctionDataView.h"
 #include "Log.h"
@@ -54,6 +55,7 @@
 #include "ScopeTimer.h"
 #include "Serialization.h"
 #include "SessionsDataView.h"
+#include "StringManager.h"
 #include "Systrace.h"
 #include "Tcp.h"
 #include "TcpClient.h"
@@ -338,6 +340,25 @@ void OrbitApp::AddSymbol(uint64_t a_Address, const std::string& a_Module,
   symbol->m_Module = a_Module;
   Capture::GTargetProcess->AddSymbol(a_Address, symbol);
 }
+//-----------------------------------------------------------------------------
+void OrbitApp::AddKeyAndString(uint64_t key, const std::string& str) {
+  if (ConnectionManager::Get().IsService()) {
+    KeyAndString key_and_string;
+    key_and_string.key = key;
+    key_and_string.str = str;
+    if (GStringManager->Exists(key)) {
+      std::string message_data = SerializeObjectBinary(key_and_string);
+      GTcpServer->Send(Msg_KeyAndString, (void*)message_data.c_str(),
+                       message_data.size());
+      GStringManager->Add(key, str);
+    }
+  }
+  auto key_and_string = std::make_shared<KeyAndString>();
+  key_and_string->key = key;
+  key_and_string->str = str;
+  GStringManager->Add(key, str);
+}
+
 
 //-----------------------------------------------------------------------------
 void OrbitApp::LoadSystrace(const std::string& a_FileName) {
@@ -408,6 +429,7 @@ bool OrbitApp::Init() {
   GOrbitApp = new OrbitApp();
   GCoreApp = GOrbitApp;
   GTimerManager = std::make_unique<TimerManager>();
+  GStringManager = std::make_unique<StringManager>();
   GTcpServer = new TcpServer();
 
   Path::Init();
@@ -669,6 +691,7 @@ int OrbitApp::OnExit() {
 
   GParams.Save();
   GTimerManager = nullptr;
+  GStringManager = nullptr;
   if (GOrbitApp->HasTcpServer()) {
     GTcpServer->Stop();
   }

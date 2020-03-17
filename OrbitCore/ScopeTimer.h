@@ -70,10 +70,6 @@ class Timer {
   bool IsType(Type a_Type) const { return m_Type == a_Type; }
   bool IsCoreActivity() const { return m_Type == CORE_ACTIVITY; }
 
-  char* EncodedString(){ return reinterpret_cast<char*>(&m_UserData); }
-  const char* EncodedString() const { return reinterpret_cast<const char*>(&m_UserData); }
-  void EncodeString(const char* msg) { strncpy(EncodedString(), msg, sizeof(m_UserData)-1); }
-
  public:
   // Needs to have to exact same layout in win32/x64, debug/release
   uint32_t m_TID;
