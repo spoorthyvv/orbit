@@ -237,6 +237,10 @@ void TimeGraph::ProcessTimer(const Timer& a_Timer) {
   if (!a_Timer.IsType(Timer::THREAD_ACTIVITY) &&
       !a_Timer.IsType(Timer::CORE_ACTIVITY)) {
     std::shared_ptr<ThreadTrack> track = GetThreadTrack(a_Timer.m_TID);
+    if (a_Timer.m_Type == Timer::GPU_ACTIVITY) {
+      std::string name = GStringManager->Get(a_Timer.m_UserData[1]);
+      track->SetName(name);
+    }
     track->OnTimer(a_Timer);
     ++m_ThreadCountMap[a_Timer.m_TID];
     if( a_Timer.m_Type == Timer::INTROSPECTION ) {
@@ -591,6 +595,8 @@ void TimeGraph::UpdatePrimitives(bool a_Picking) {
               std::string gpu_stage = GStringManager->Get(timer.m_UserData[0]);
               std::string text = absl::StrFormat("%s %s", gpu_stage.c_str(), time.c_str());
               textBox.SetText(text);
+
+              threadTrack->SetName(GStringManager->Get(timer.m_UserData[1]));
             }
 
             m_Batcher.AddBox(box, colors, PickingID::BOX, &textBox);
