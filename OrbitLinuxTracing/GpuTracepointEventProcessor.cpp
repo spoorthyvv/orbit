@@ -30,7 +30,7 @@ int GpuTracepointEventProcessor::ComputeDepthForEvent(const std::string& timelin
   std::vector<uint64_t>& vec = it->second;
 
   for (int d = 0; d < vec.size(); ++d) {
-    if (start_timestamp >= vec[d]) {
+    if (start_timestamp >= (vec[d] + 20 * 1000000)) {
       vec[d] = end_timestamp;
       return d;
     }

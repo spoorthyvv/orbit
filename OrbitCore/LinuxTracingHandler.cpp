@@ -190,8 +190,8 @@ void LinuxTracingHandler::OnGpuExecutionEvent(const LinuxTracing::GpuExecutionEv
   const std::string hw_execution("hw execution");
   hash = StringHash(hw_execution);
   core_app_->AddKeyAndString(hash, hw_execution);
-  timer_sched_to_start.m_UserData[0] = hash;
-  timer_sched_to_start.m_UserData[1] = timeline_hash;
+  timer_start_to_finish.m_UserData[0] = hash;
+  timer_start_to_finish.m_UserData[1] = timeline_hash;
 
   timer_start_to_finish.m_Type = Timer::GPU_ACTIVITY;
   core_app_->ProcessTimer(timer_start_to_finish, gpu_event.timeline_);

@@ -238,7 +238,7 @@ void TimeGraph::ProcessTimer(const Timer& a_Timer) {
       !a_Timer.IsType(Timer::CORE_ACTIVITY)) {
     std::shared_ptr<ThreadTrack> track = GetThreadTrack(a_Timer.m_TID);
     if (a_Timer.m_Type == Timer::GPU_ACTIVITY) {
-      std::string name = GStringManager->Get(a_Timer.m_UserData[1]);
+      std::string name = GStringManager->Get(a_Timer.m_UserData[1]).value_or("");
       track->SetName(name);
     }
     track->OnTimer(a_Timer);
@@ -548,7 +548,7 @@ void TimeGraph::UpdatePrimitives(bool a_Picking) {
 
           if (timer.m_Type == Timer::GPU_ACTIVITY) {
             float coeff = 1.0f;
-            std::string gpu_stage = GStringManager->Get(timer.m_UserData[0]);
+            std::string gpu_stage = GStringManager->Get(timer.m_UserData[0]).value_or("");
             if (gpu_stage == "sw queue") {
               coeff = 0.5f;
             } else if (gpu_stage == "hw queue") {
@@ -592,11 +592,11 @@ void TimeGraph::UpdatePrimitives(bool a_Picking) {
             if (timer.m_Type == Timer::GPU_ACTIVITY) {
               double elapsedMillis = ((double)elapsed) * 0.001;
               std::string time = GetPrettyTime(elapsedMillis);
-              std::string gpu_stage = GStringManager->Get(timer.m_UserData[0]);
+              std::string gpu_stage = GStringManager->Get(timer.m_UserData[0]).value_or("");
               std::string text = absl::StrFormat("%s %s", gpu_stage.c_str(), time.c_str());
               textBox.SetText(text);
 
-              threadTrack->SetName(GStringManager->Get(timer.m_UserData[1]));
+              threadTrack->SetName(GStringManager->Get(timer.m_UserData[1]).value_or(""));
             }
 
             m_Batcher.AddBox(box, colors, PickingID::BOX, &textBox);
@@ -618,7 +618,7 @@ void TimeGraph::UpdatePrimitives(bool a_Picking) {
 
                 textBox.SetText(text);
               } else if( timer.m_Type == Timer::INTROSPECTION) {
-                textBox.SetText(GStringManager->Get(timer.m_UserData[0]));
+                textBox.SetText(GStringManager->Get(timer.m_UserData[0]).value_or(""));
               }
                else if (!SystraceManager::Get().IsEmpty()) {
                 textBox.SetText(SystraceManager::Get().GetFunctionName(
