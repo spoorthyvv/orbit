@@ -15,8 +15,6 @@
 class TextRenderer;
 class EventTrack;
 
-typedef BlockChain<TextBox, 4 * 1024> TimerChain;
-
 //-----------------------------------------------------------------------------
 class ThreadTrack : public Track {
  public:
@@ -30,15 +28,11 @@ class ThreadTrack : public Track {
   // Track
   float GetHeight() const override;
 
-  std::vector<std::shared_ptr<TimerChain>> GetTimers();
+  std::vector<std::shared_ptr<TimerChain>> GetTimers() override;
   uint32_t GetDepth() const { return m_Depth; }
 
   Color GetColor() const;
   static Color GetColor(ThreadID a_TID);
-
-  uint32_t GetNumTimers() const { return m_NumTimers; }
-  TickType GetMinTime() const { return m_MinTime; }
-  TickType GetMaxTime() const { return m_MaxTime; }
 
   const TextBox* GetFirstAfterTime(TickType a_Tick, uint32_t a_Depth) const;
   const TextBox* GetFirstBeforeTime(TickType a_Tick, uint32_t a_Depth) const;
@@ -48,10 +42,7 @@ class ThreadTrack : public Track {
   const TextBox* GetUp(TextBox* a_TextBox) const;
   const TextBox* GetDown(TextBox* a_TextBox) const;
 
-  std::vector<std::shared_ptr<TimerChain>> GetAllChains() const;
-
-  bool GetVisible() const { return m_Visible; }
-  void SetVisible(bool value) { m_Visible = value; }
+  std::vector<std::shared_ptr<TimerChain>> GetAllChains() const ;
 
  protected:
   inline void UpdateDepth(uint32_t a_Depth) {
@@ -64,11 +55,7 @@ class ThreadTrack : public Track {
   std::shared_ptr<EventTrack> m_EventTrack;
   uint32_t m_Depth = 1;
   ThreadID m_ThreadID;
-  bool m_Visible = true;
 
-  std::atomic<uint32_t> m_NumTimers;
-  std::atomic<TickType> m_MinTime;
-  std::atomic<TickType> m_MaxTime;
   mutable Mutex m_Mutex;
 
   std::map<int, std::shared_ptr<TimerChain>> m_Timers;

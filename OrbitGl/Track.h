@@ -3,12 +3,19 @@
 //-----------------------------------
 #pragma once
 
+#include <atomic>
+#include <vector>
+#include <memory>
+
+#include "BlockChain.h"
 #include "CoreMath.h"
 #include "PickingManager.h"
 #include "TextBox.h"
 
 class GlCanvas;
 class TimeGraph;
+
+typedef BlockChain<TextBox, 4 * 1024> TimerChain;
 
 //-----------------------------------------------------------------------------
 class Track : public Pickable {
@@ -25,6 +32,15 @@ class Track : public Pickable {
   bool Movable() override { return true; }
 
   virtual float GetHeight() const { return 0.f; };
+  bool GetVisible() const { return m_Visible; }
+  void SetVisible(bool value) { m_Visible = value; }
+
+  uint32_t GetNumTimers() const { return m_NumTimers; }
+  TickType GetMinTime() const { return m_MinTime; }
+  TickType GetMaxTime() const { return m_MaxTime; }
+  
+  virtual std::vector<std::shared_ptr<TimerChain>> GetTimers() {return {}; }
+  virtual std::vector<std::shared_ptr<TimerChain>> GetAllChains() {return {}; }
 
   bool IsMoving() const { return m_Moving; }
   Vec2 GetMoveDelta() const {
@@ -52,4 +68,8 @@ class Track : public Pickable {
   std::string m_Name;
   uint32_t m_ID;
   Color m_Color;
+  bool m_Visible = true;
+  std::atomic<uint32_t> m_NumTimers;
+  std::atomic<TickType> m_MinTime;
+  std::atomic<TickType> m_MaxTime;
 };

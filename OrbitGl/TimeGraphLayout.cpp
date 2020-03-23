@@ -43,7 +43,7 @@ float TimeGraphLayout::GetTracksHeight() {
 //-----------------------------------------------------------------------------
 void TimeGraphLayout::SortTracksByPosition(
     const ThreadTrackMap& a_ThreadTracks) {
-  std::vector<std::shared_ptr<ThreadTrack> > tracks;
+  std::vector<std::shared_ptr<Track> > tracks;
 
   for (auto& pair : a_ThreadTracks) {
     if (pair.second->GetVisible()) {
@@ -52,8 +52,8 @@ void TimeGraphLayout::SortTracksByPosition(
   }
 
   std::sort(tracks.begin(), tracks.end(),
-            [](const std::shared_ptr<ThreadTrack>& a,
-               const std::shared_ptr<ThreadTrack>& b) -> bool {
+            [](const std::shared_ptr<Track>& a,
+               const std::shared_ptr<Track>& b) -> bool {
               return a->GetPos()[1] > b->GetPos()[1];
             });
 
@@ -86,10 +86,9 @@ void TimeGraphLayout::CalculateOffsets(const ThreadTrackMap& a_ThreadTracks) {
     auto iter = a_ThreadTracks.find(threadID);
     if (iter == a_ThreadTracks.end()) continue;
 
-    std::shared_ptr<ThreadTrack> track = iter->second;
+    std::shared_ptr<Track> track = iter->second;
     m_ThreadBlockOffsets[threadID] = offset;
-    float threadBlockHeight =
-        GetTracksHeight() + track->GetDepth() * m_TextBoxHeight;
+    float threadBlockHeight = track->GetHeight();
     offset -= (threadBlockHeight + m_SpaceBetweenThreadBlocks);
   }
 

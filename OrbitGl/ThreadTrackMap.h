@@ -8,8 +8,8 @@
 
 #include "CallstackTypes.h"
 
-class ThreadTrack;
+class Track;
 
 //-----------------------------------------------------------------------------
-typedef std::unordered_map<ThreadID, std::shared_ptr<ThreadTrack> >
+typedef std::unordered_map<ThreadID, std::shared_ptr<Track> >
     ThreadTrackMap;

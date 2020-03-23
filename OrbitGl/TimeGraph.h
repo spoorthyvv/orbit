@@ -163,7 +163,8 @@ class TimeGraph {
   std::shared_ptr<Systrace> m_Systrace;
 
   mutable Mutex m_Mutex;
-  ThreadTrackMap m_ThreadTracks;
+  ThreadTrackMap tracks_;
+  std::unordered_map<ThreadID, std::shared_ptr<ThreadTrack> > thread_tracks_;
   double m_MarginRatio = 0.1;
   std::string m_ThreadFilter;
 

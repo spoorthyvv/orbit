@@ -63,7 +63,8 @@ void TimeGraph::Clear() {
   m_Layout.Reset();
 
   ScopeLock lock(m_Mutex);
-  m_ThreadTracks.clear();
+  tracks_.clear();
+  thread_tracks_.clear();
 
   m_ContextSwitchesMap.clear();
   m_CoreUtilizationMap.clear();
@@ -77,7 +78,7 @@ bool TimeGraph::UpdateSessionMinMaxCounter() {
   m_SessionMinCounter = LLONG_MAX;
 
   m_Mutex.lock();
-  for (auto& pair : m_ThreadTracks) {
+  for (auto& pair : tracks_) {
     auto& track = pair.second;
     if (track->GetNumTimers()) {
       TickType min = track->GetMinTime();
@@ -256,7 +257,7 @@ void TimeGraph::ProcessTimer(const Timer& a_Timer) {
 uint32_t TimeGraph::GetNumTimers() const {
   uint32_t numTimers = 0;
   ScopeLock lock(m_Mutex);
-  for (auto& pair : m_ThreadTracks) {
+  for (auto& pair : tracks_) {
     auto& track = pair.second;
     numTimers += track->GetNumTimers();
   }
@@ -272,8 +273,8 @@ uint32_t TimeGraph::GetNumCores() const {
 //-----------------------------------------------------------------------------
 std::vector<std::shared_ptr<TimerChain>> TimeGraph::GetAllTimerChains() const {
   std::vector<std::shared_ptr<TimerChain>> chains;
-  for (const auto& pair : m_ThreadTracks) {
-    const std::shared_ptr<ThreadTrack>& track = pair.second;
+  for (const auto& pair : tracks_) {
+    const std::shared_ptr<Track>& track = pair.second;
     Append(chains, track->GetAllChains());
   }
   return chains;
@@ -483,12 +484,12 @@ void TimeGraph::UpdatePrimitives(bool a_Picking) {
   unsigned int TextBoxID = 0;
 
   for (auto& pair : GetThreadTracksCopy()) {
-    std::shared_ptr<ThreadTrack>& threadTrack = pair.second;
+    std::shared_ptr<Track>& track = pair.second;
 
-    if (!m_Layout.IsThreadVisible(threadTrack->GetID())) continue;
+    if (!m_Layout.IsThreadVisible(track->GetID())) continue;
 
     std::vector<std::shared_ptr<TimerChain>> depthChain =
-        threadTrack->GetTimers();
+        track->GetTimers();
     for (auto& textBoxes : depthChain) {
       if (textBoxes == nullptr) break;
 
@@ -775,18 +776,19 @@ void TimeGraph::DrawThreadTracks(bool a_Picking) {
 //-----------------------------------------------------------------------------
 std::shared_ptr<ThreadTrack> TimeGraph::GetThreadTrack(ThreadID a_TID) {
   ScopeLock lock(m_Mutex);
-  std::shared_ptr<ThreadTrack> track = m_ThreadTracks[a_TID];
+  std::shared_ptr<ThreadTrack> track = thread_tracks_[a_TID];
   if (track == nullptr) {
     track = std::make_shared<ThreadTrack>(this, a_TID);
+    tracks_[a_TID] = track;
+    thread_tracks_[a_TID] = track;
   }
-  m_ThreadTracks[a_TID] = track;
   return track;
 }
 
 //-----------------------------------------------------------------------------
 ThreadTrackMap TimeGraph::GetThreadTracksCopy() const {
   ScopeLock lock(m_Mutex);
-  return m_ThreadTracks;
+  return tracks_;
 }
 
 //-----------------------------------------------------------------------------
@@ -852,7 +854,7 @@ void TimeGraph::UpdateThreadIds() {
   }
 
   ScopeLock lock(m_Mutex);
-  m_Layout.CalculateOffsets(m_ThreadTracks);
+  m_Layout.CalculateOffsets(tracks_);
 }
 
 //-----------------------------------------------------------------------------
