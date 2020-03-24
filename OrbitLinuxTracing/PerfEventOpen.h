@@ -85,7 +85,7 @@ static constexpr uint64_t SAMPLE_REGS_USER_ALL =
 // TODO: As this amount of memory has to be copied from the ring buffer for each
 //  sample, this constant should be a parameters and should be made available in
 //  some setting.
-static constexpr uint16_t SAMPLE_STACK_USER_SIZE = 65000;
+static constexpr uint16_t SAMPLE_STACK_USER_SIZE = 4*1024;
 
 // perf_event_open for context switches.
 int context_switch_event_open(pid_t pid, int32_t cpu);

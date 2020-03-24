@@ -144,8 +144,8 @@ class UprobesCallstackManager {
     for (auto previous_callstack = previous_callstacks.rbegin();
          previous_callstack != previous_callstacks.rend();
          ++previous_callstack) {
-      CHECK(previous_callstack->IsUnwound());
-      if (!previous_callstack->IsCallstackValid()) {
+      //CHECK(previous_callstack->IsUnwound());
+      if (!previous_callstack->IsUnwound() || !previous_callstack->IsCallstackValid()) {
         // A previous callstack was an unwinding failure, hence unfortunately
         // this is a failure as well.
         return {};
@@ -159,8 +159,8 @@ class UprobesCallstackManager {
     for (auto previous_callstack = previous_callstacks.rbegin();
          previous_callstack != previous_callstacks.rend();
          ++previous_callstack) {
-      CHECK(previous_callstack->IsUnwound());
-      CHECK(previous_callstack->IsCallstackValid());
+      //CHECK(previous_callstack->IsUnwound());
+      //CHECK(previous_callstack->IsCallstackValid());
       // Start from 1 to remove the instrumented function's entry.
       for (size_t i = 1; i < previous_callstack->GetCallstack().size(); ++i) {
         full_callstack.push_back(previous_callstack->GetCallstack()[i]);
