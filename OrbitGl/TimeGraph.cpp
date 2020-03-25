@@ -14,6 +14,7 @@
 #include "Geometry.h"
 #include "GlCanvas.h"
 #include "Log.h"
+#include "OrbitBase/Logging.h"
 #include "OrbitType.h"
 #include "OrbitUnreal.h"
 #include "Params.h"
@@ -241,6 +242,7 @@ void TimeGraph::ProcessTimer(const Timer& a_Timer) {
     std::shared_ptr<ThreadTrack> track = GetThreadTrack(a_Timer.m_TID);
     if (a_Timer.m_Type == Timer::GPU_ACTIVITY) {
       track->SetName(string_manager_->Get(a_Timer.m_UserData[1]).value_or(""));
+      track->SetDisplayNameOnly(true);
     }
 
     track->OnTimer(a_Timer);
